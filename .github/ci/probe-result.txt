@@ -1,8 +1,0 @@
-godot: 4.7.2.stable.official.ed1daf0bf
-java: openjdk version "25.0.5" 2026-10-20 LTS
-sdk: /usr/local/lib/android/sdk 36.1.0 37.0.0 
-ndk: 27.3.13750724 29.0.14206865 30.0.16248370 
-4
-               total        used        free      shared  buff/cache   available
-Mem:              15           0          13           0           1          14
-/dev/mapper/cow-root  145G   55G   91G  38% /
