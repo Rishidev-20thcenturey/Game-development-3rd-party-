@@ -47,7 +47,7 @@ On first launch the game uses the **Low** quality preset and fullscreen. You can
 
 ## Performance on low-end phones
 
-Runs smoothly on a Snapdragon 8 Gen 1 tablet. The plan for mid-range and budget phones (same look, smoother frame rate) is in [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
+Runs smoothly on a Snapdragon 8 Gen 1 tablet. The plan to cut CPU and GPU load on mid-range and budget phones (same look, steadier frame rate) is in [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
 
 ## How it's built
 
