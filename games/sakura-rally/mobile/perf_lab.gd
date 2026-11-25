@@ -3,7 +3,7 @@ extends CanvasLayer
 ##
 ## Added by mobile.gd on phones (and in CI). Two parts:
 ##   * the meter: one tap-able strip in the top-right corner with fps, frame time, CPU time
-##     (scripts, physics, render submission), GPU time, the limiting side, draw calls,
+##     (game logic, physics, render submission), GPU time, the limiting side, draw calls,
 ##     triangles, the 3D resolution, the screen refresh rate and the quality preset;
 ##   * the lab: tapping the meter pauses the drive and opens switches that change one cost at a
 ##     time, live: frame-rate cap, 3D resolution, sun shadows, ink lines and colour grade.
@@ -23,6 +23,18 @@ const SCALES := [0.0, 1.0, 0.85, 0.7, 0.5]
 ## unchanged; it only stops one slow frame from making the next one slower.
 const MAX_PHYSICS_STEPS := 4
 const SAMPLE_SECONDS := 0.5
+## Process order: the stamp runs before every other node's _process, the lab after all of them,
+## so the time between the two is the game's own script work for the frame (Godot's
+## TIME_PROCESS monitor also includes drawing and waiting for the GPU, so it can't tell them apart).
+const FIRST := -1000000
+const LAST := 1000000
+
+
+class Stamp extends Node:
+	var usec := 0
+
+	func _process(_delta: float) -> void:
+		usec = Time.get_ticks_usec()
 const FONT_SIZE := 21
 
 var meter_on := true
@@ -42,7 +54,8 @@ var _panel: PanelContainer
 var _rows := {} ## key -> Button
 var _report_btn: Button
 var _vp_rid: RID
-var _acc := {"t": 0.0, "n": 0, "worst": 0.0, "rcpu": 0.0, "gpu": 0.0}
+var _acc := {"t": 0.0, "n": 0, "worst": 0.0, "rcpu": 0.0, "gpu": 0.0, "logic": 0.0}
+var _stamp: Stamp
 
 
 func setup(mobile: Node, meter_default: bool) -> void:
@@ -54,6 +67,12 @@ func setup(mobile: Node, meter_default: bool) -> void:
 func _ready() -> void:
 	layer = 90
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	process_priority = LAST
+	_stamp = Stamp.new()
+	_stamp.name = "PerfStamp"
+	_stamp.process_mode = Node.PROCESS_MODE_ALWAYS
+	_stamp.process_priority = FIRST
+	add_child(_stamp)
 	if OS.has_feature("mobile"):
 		Engine.max_physics_steps_per_frame = MAX_PHYSICS_STEPS
 	_vp_rid = get_viewport().get_viewport_rid()
@@ -255,6 +274,7 @@ func _enforce() -> void:
 # ---------------------------------------------------------------- measuring
 
 func _process(delta: float) -> void:
+	var logic_ms := 0.0 if _stamp.usec == 0 else maxf(Time.get_ticks_usec() - _stamp.usec, 0) / 1000.0
 	_enforce()
 	_update_visibility()
 	var ms := delta * 1000.0
@@ -264,6 +284,7 @@ func _process(delta: float) -> void:
 	_acc["rcpu"] += RenderingServer.viewport_get_measured_render_time_cpu(_vp_rid) \
 			+ RenderingServer.get_frame_setup_time_cpu()
 	_acc["gpu"] += RenderingServer.viewport_get_measured_render_time_gpu(_vp_rid)
+	_acc["logic"] += logic_ms
 	if _acc["t"] < SAMPLE_SECONDS:
 		return
 	var n := float(_acc["n"])
@@ -271,18 +292,26 @@ func _process(delta: float) -> void:
 	var fps := 1000.0 / maxf(frame_ms, 0.001)
 	var ticks := float(Engine.physics_ticks_per_second)
 	var steps := clampf(ticks / maxf(fps, 1.0), 1.0, float(Engine.max_physics_steps_per_frame))
-	var scripts := Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
+	var scripts: float = _acc["logic"] / n
 	var physics := Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0
 	var render_cpu: float = _acc["rcpu"] / n
 	var gpu: float = _acc["gpu"] / n
 	var cpu := scripts + physics * steps + render_cpu
 	var cap: int = CAPS[cap_i]
 	var refresh := DisplayServer.screen_get_refresh_rate()
-	var limit := "GPU" if gpu > cpu else "CPU"
+	if refresh <= 1.0 or refresh > 1000.0:
+		refresh = 0.0
+	# The GPU is the limit when it is busy for most of the frame; otherwise the frame waits on the
+	# CPU side (scripts, physics, draw submission) or on a cap / the screen.
+	var limit := "CPU"
 	if cap > 0 and fps >= cap * 0.95:
 		limit = "cap"
 	elif refresh > 0.0 and fps >= refresh * 0.95:
 		limit = "screen"
+	elif gpu <= 0.01:
+		limit = "CPU? (no GPU timer)"
+	elif gpu >= frame_ms * 0.85:
+		limit = "GPU"
 	var win := get_window()
 	var game := _game()
 	stats = {
@@ -296,7 +325,7 @@ func _process(delta: float) -> void:
 		"refresh_hz": refresh,
 		"quality": str(game.get_setting("quality")) if game != null else "?",
 	}
-	_acc = {"t": 0.0, "n": 0, "worst": 0.0, "rcpu": 0.0, "gpu": 0.0}
+	_acc = {"t": 0.0, "n": 0, "worst": 0.0, "rcpu": 0.0, "gpu": 0.0, "logic": 0.0}
 	_meter.text = _meter_text()
 
 
@@ -304,10 +333,11 @@ func _meter_text() -> String:
 	var s := stats
 	var w: Vector2i = s["window"]
 	var sc: float = s["scale_3d"]
-	return "%d fps  %.1f ms (worst %.0f)  ·  limit: %s\nCPU %.1f ms  [scripts %.1f · physics %.1f×%.0f · render %.1f]   GPU %.1f ms\n3D %d×%d (%d%%) · %d Hz · %d draws · %dk tris · %s" % [
+	var hz: float = s["refresh_hz"]
+	return "%d fps  %.1f ms (worst %.0f)  ·  limit: %s\nCPU %.1f ms  [game logic %.1f · physics %.1f×%.0f · render %.1f]   GPU %.1f ms\n3D %d×%d (%d%%) · %s Hz · %d draws · %dk tris · %s" % [
 		roundi(s["fps"]), s["frame_ms"], s["worst_ms"], s["limit"],
 		s["cpu_ms"], s["scripts_ms"], s["physics_ms"], s["physics_steps"], s["render_cpu_ms"], s["gpu_ms"],
-		roundi(w.x * sc), roundi(w.y * sc), roundi(sc * 100.0), roundi(s["refresh_hz"]),
+		roundi(w.x * sc), roundi(w.y * sc), roundi(sc * 100.0), ("%d" % roundi(hz)) if hz > 0.0 else "?",
 		s["draw_calls"], roundi(s["triangles"] / 1000.0), str(s["quality"]).capitalize()]
 
 
