@@ -1,0 +1,286 @@
+name: Sakura Rally — Android APK
+
+# Builds the Android APK of Sakura Rally (MIT, SummerEngine/sakura-rally) from the pinned
+# upstream commit plus this repo's mobile layer (games/sakura-rally), tests it, and publishes it
+# as a GitHub Release asset. See games/sakura-rally/README.md.
+
+on:
+  push:
+    branches: [main, arena/e441b8dd-game-development-3rd-party]
+    paths:
+      - games/sakura-rally/**
+      - "!games/sakura-rally/docs/**"
+      - "!games/sakura-rally/**.md"
+      - .github/workflows/sakura-rally-android.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sakura-rally-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      PROJ: ${{ github.workspace }}/build/sakura-rally
+      OUT: ${{ github.workspace }}/out
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read build.env
+        run: |
+          grep -E '^[A-Z_]+=' games/sakura-rally/build.env >> "$GITHUB_ENV"
+          cat games/sakura-rally/build.env
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Cache Godot + Android templates
+        uses: actions/cache@v4
+        with:
+          path: ~/godot-dl
+          key: godot-${{ env.GODOT_VERSION }}-${{ env.GODOT_FLAVOR }}-android-v1
+
+      - name: Install Godot ${{ env.GODOT_VERSION }} + Android export templates
+        run: |
+          set -euo pipefail
+          V="${GODOT_VERSION}-${GODOT_FLAVOR}"
+          BASE="https://github.com/godotengine/godot/releases/download/${V}"
+          mkdir -p ~/godot-dl && cd ~/godot-dl
+          if [ ! -x godot ]; then
+            curl -fsSL -o g.zip "$BASE/Godot_v${V}_linux.x86_64.zip"
+            unzip -q g.zip && mv "Godot_v${V}_linux.x86_64" godot && rm g.zip
+          fi
+          if [ ! -f templates/android_release.apk ]; then
+            curl -fsSL -o t.tpz "$BASE/Godot_v${V}_export_templates.tpz"
+            unzip -q t.tpz 'templates/android_*' 'templates/version.txt' && rm t.tpz
+          fi
+          T="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_FLAVOR}"
+          mkdir -p "$T" && cp templates/* "$T/"
+          sudo ln -sf "$HOME/godot-dl/godot" /usr/local/bin/godot
+          godot --headless --version
+          ls -la "$T"
+
+      - name: Fetch upstream ${{ env.UPSTREAM_REPO }}@${{ env.UPSTREAM_SHA }}
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          curl -fsSL "https://codeload.github.com/${UPSTREAM_REPO}/tar.gz/${UPSTREAM_SHA}" | tar xz -C build
+          mv build/sakura-rally-* "$PROJ"
+          rm -rf "$PROJ/docs/renders" "$PROJ/tools/audio/cache"
+          du -sh "$PROJ"
+
+      - name: Apply mobile layer
+        run: python3 games/sakura-rally/prepare.py "$PROJ"
+
+      - name: Cache imported assets
+        uses: actions/cache@v4
+        with:
+          path: build/sakura-rally/.godot
+          key: sakura-import-${{ env.GODOT_VERSION }}-${{ env.UPSTREAM_SHA }}-${{ hashFiles('games/sakura-rally/prepare.py', 'games/sakura-rally/android/icons/**') }}
+          restore-keys: sakura-import-${{ env.GODOT_VERSION }}-${{ env.UPSTREAM_SHA }}-
+
+      - name: Godot editor settings (Android SDK + JDK)
+        run: |
+          MM="$(echo "$GODOT_VERSION" | cut -d. -f1,2)"
+          mkdir -p ~/.config/godot
+          cat > ~/.config/godot/editor_settings-${MM}.tres <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "${ANDROID_HOME}"
+          export/android/java_sdk_path = "${JAVA_HOME}"
+          EOF
+          cat ~/.config/godot/editor_settings-${MM}.tres
+
+      - name: Import project
+        run: |
+          set -o pipefail
+          timeout 2400 godot --headless --path "$PROJ" --import 2>&1 | tee import.log | grep -vE '^\s*$' | tail -60
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Compile Error" import.log; then
+            echo "::error::script errors during import"; exit 1
+          fi
+
+      - name: Touch layer check (headless)
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          timeout 900 godot --headless --disable-crash-handler --path "$PROJ" \
+            -s res://mobile/ci/mobile_check.gd -- --touch 2>&1 | tee mobile_check.log | grep -E "CHECK|SUMMARY|FAIL|ERROR|TIMEOUT"
+
+      - name: Upstream regression flows with the touch layer active (headless)
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          timeout 1200 godot --headless --disable-crash-handler --path "$PROJ" \
+            -s res://tools/game/flows.gd -- --touch map=hanami speed=3 2>&1 | tee flows.log | grep -E "CHECK|SUMMARY|FAIL|TIMEOUT" | tail -80
+
+      - name: Rendered previews (Mobile renderer, software Vulkan)
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          sudo apt-get update -qq && sudo apt-get install -y -qq mesa-vulkan-drivers xvfb > /dev/null
+          mkdir -p "$OUT/shots"
+          timeout 2400 xvfb-run -a -s "-screen 0 1600x720x24" godot --rendering-method mobile --fixed-fps 30 \
+            --disable-crash-handler --path "$PROJ" -s res://mobile/ci/mobile_check.gd -- --touch "out=$OUT/shots" \
+            2>&1 | tee render.log | grep -E "CHECK|SUMMARY|SHOT|FAIL|ERROR|TIMEOUT"
+          ls -la "$OUT/shots"
+
+      - name: Report test results as annotations
+        if: always()
+        run: |
+          for f in mobile_check flows render; do
+            [ -f "$f.log" ] || { echo "::warning title=$f::no log"; continue; }
+            ok=$(grep -cE 'CHECK (ok|PASS)' "$f.log" || true); bad=$(grep -c 'CHECK FAIL' "$f.log" || true)
+            echo "::notice title=$f::${ok} checks ok, ${bad} failed$(grep -m1 -o 'SUMMARY.*' "$f.log" | sed 's/^/ — /')"
+            grep 'CHECK FAIL' "$f.log" | head -n 15 | sed "s/^.*CHECK FAIL/::warning title=$f FAIL::/" || true
+            grep -E 'SCRIPT ERROR|Parse Error|TIMEOUT' "$f.log" | sort | uniq -c | sort -rn | head -n 5 | sed "s/^/::warning title=$f error::/" || true
+          done
+          if [ -f import.log ]; then
+            echo "::notice title=import::$(grep -c -E '^ERROR|SCRIPT ERROR' import.log || true) error lines"
+            grep -E '^ERROR|SCRIPT ERROR' import.log | sort | uniq -c | sort -rn | head -n 5 | sed 's/^/::warning title=import error::/' || true
+          fi
+          if [ -f export.log ]; then
+            grep -iE 'error|failed' export.log | head -n 8 | sed 's/^/::warning title=export::/' || true
+          fi
+
+      - name: Restore preview signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/sakura-keystore
+          key: sakura-rally-preview-keystore-v1
+
+      - name: Signing key
+        env:
+          KS_B64: ${{ secrets.SAKURA_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.SAKURA_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.SAKURA_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/sakura-keystore
+          if [ -n "${KS_B64}" ]; then
+            echo "Using the release key from repository secrets"
+            echo "$KS_B64" | base64 -d > ~/release.jks
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$HOME/release.jks" >> "$GITHUB_ENV"
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=${KS_ALIAS}" >> "$GITHUB_ENV"
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=${KS_PASS}" >> "$GITHUB_ENV"
+            echo "SIGNING=release key (secrets)" >> "$GITHUB_ENV"
+          else
+            KS=~/sakura-keystore/preview.jks
+            if [ ! -f "$KS" ]; then
+              echo "Generating a preview key (kept in the Actions cache so updates install over each other)"
+              head -c 24 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' > ~/sakura-keystore/pass
+              keytool -genkeypair -keystore "$KS" -storepass "$(cat ~/sakura-keystore/pass)" -alias sakura \
+                -keyalg RSA -keysize 3072 -validity 10000 \
+                -dname "CN=Sakura Rally (preview build), O=Game-development-3rd-party, C=IN"
+            fi
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$KS" >> "$GITHUB_ENV"
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=sakura" >> "$GITHUB_ENV"
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=$(cat ~/sakura-keystore/pass)" >> "$GITHUB_ENV"
+            echo "SIGNING=preview key (Actions cache)" >> "$GITHUB_ENV"
+          fi
+
+      - name: Export APK
+        run: |
+          set -o pipefail
+          mkdir -p "$OUT"
+          APK="$OUT/SakuraRally-v${VERSION_NAME}.apk"
+          timeout 2400 godot --headless --path "$PROJ" --export-release "Android" "$APK" 2>&1 | tee export.log | tail -40
+          test -s "$APK" || { echo "::error::export produced no APK"; exit 1; }
+          echo "APK=$APK" >> "$GITHUB_ENV"
+
+      - name: Verify APK
+        run: |
+          set -euo pipefail
+          BT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          "$BT/apksigner" verify --verbose --print-certs "$APK" | grep -vE "^WARNING" | sed -n '1,20p'
+          "$BT/zipalign" -c -P 16 4 "$APK" && echo "zipalign OK"
+          "$BT/aapt2" dump badging "$APK" | grep -E "^(package|sdkVersion|targetSdkVersion|application-label|launchable|uses-permission|native-code|uses-gl-es)" 
+          unzip -l "$APK" | tail -1
+          ( cd "$OUT" && sha256sum "$(basename "$APK")" > "$(basename "$APK").sha256" && cat ./*.sha256 )
+          {
+            echo "### Sakura Rally APK"
+            echo ""
+            echo "- File: \`$(basename "$APK")\` — $(du -h "$APK" | cut -f1)"
+            echo "- SHA-256: \`$(cut -d' ' -f1 "$APK.sha256")\`"
+            echo "- Signed with: ${SIGNING}"
+            echo "- Upstream: ${UPSTREAM_REPO}@${UPSTREAM_SHA:0:7}, Godot ${GODOT_VERSION}-${GODOT_FLAVOR}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sakura-rally-android
+          path: |
+            out/
+            *.log
+          if-no-files-found: warn
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="sakura-rally-v${VERSION_NAME}"
+          NOTES="$(mktemp)"
+          {
+            echo "**Sakura Rally ${VERSION_NAME}** for Android (arm64, Android 7.0+), built from"
+            echo "[${UPSTREAM_REPO}@${UPSTREAM_SHA:0:7}](https://github.com/${UPSTREAM_REPO}/tree/${UPSTREAM_SHA}) (MIT, © 2026 Summer Engine)"
+            echo "with Godot ${GODOT_VERSION} and this repo's touch-control layer."
+            echo ""
+            echo "Download **SakuraRally-v${VERSION_NAME}.apk** below, open it on your phone and allow *Install unknown apps*."
+            echo ""
+            echo "SHA-256: \`$(cut -d' ' -f1 "$APK.sha256")\` · Signed with: ${SIGNING} · Build: ${GITHUB_SHA:0:7}"
+          } > "$NOTES"
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release edit "$TAG" --notes-file "$NOTES"
+          else
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "Sakura Rally ${VERSION_NAME} (Android)" --notes-file "$NOTES"
+          fi
+          gh release upload "$TAG" "$APK" "$APK.sha256" --clobber
+          echo "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/$(basename "$APK")" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit preview screenshots + build info
+        if: always() && github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          D=games/sakura-rally/docs/ci
+          mkdir -p "$D"
+          python3 -m pip install -q --user pillow || true
+          python3 - "$OUT/shots" "$D" <<'PY'
+          import sys, pathlib
+          from PIL import Image
+          src, dst = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+          for f in sorted(src.glob("*.png")):
+              Image.open(f).convert("RGB").save(dst / (f.stem + ".jpg"), quality=82)
+              print("preview", f.name)
+          PY
+          {
+            echo "apk: SakuraRally-v${VERSION_NAME}.apk"
+            echo "size_bytes: $(stat -c %s "${APK:-none}" 2>/dev/null || echo none)"
+            echo "sha256: $(cut -d' ' -f1 "${APK:-none}.sha256" 2>/dev/null || echo none)"
+            echo "signing: ${SIGNING}"
+            echo "upstream: ${UPSTREAM_REPO}@${UPSTREAM_SHA}"
+            echo "godot: ${GODOT_VERSION}-${GODOT_FLAVOR}"
+            echo "source_commit: ${GITHUB_SHA}"
+            echo "mobile_check: $(grep -cE 'CHECK (ok|PASS)' mobile_check.log || true) ok, $(grep -c 'CHECK FAIL' mobile_check.log || true) failed"
+            echo "upstream_flows: $(grep -cE 'CHECK (ok|PASS)' flows.log || true) ok, $(grep -c 'CHECK FAIL' flows.log || true) failed"
+            echo "rendered_check: $(grep -cE 'CHECK (ok|PASS)' render.log || true) ok, $(grep -c 'CHECK FAIL' render.log || true) failed"
+          } > "$D/build-info.txt"
+          cp mobile_check.log "$D/mobile_check.log" 2>/dev/null || true
+          for f in import export; do if [ -f $f.log ]; then tail -n 200 $f.log > "$D/${f}_tail.log"; fi; done
+          grep -E "CHECK|SUMMARY|TIMEOUT" flows.log > "$D/flows_summary.log" || true
+          grep -E "CHECK|SUMMARY|SHOT|TIMEOUT" render.log > "$D/render_summary.log" || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$D"
+          git diff --cached --quiet && exit 0
+          git commit -m "Sakura Rally: CI previews + build info [skip ci]"
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 5; done
