@@ -195,6 +195,18 @@ jobs:
           test -s "$APK" || { echo "::error::export produced no APK"; exit 1; }
           echo "APK=$APK" >> "$GITHUB_ENV"
 
+      - name: Check the APK carries the raw data files the game reads at runtime
+        run: |
+          # Godot only packs non-resource files (map.bin) when include_filter names them.
+          # The desktop tests read them straight from the project folder, so check the APK.
+          LIST=$(unzip -l "$APK")
+          for f in assets/maps/world/map.bin assets/maps/world/map.json assets/models/props/manifest.json assets/ai/driver.json; do
+            if grep -q "/$f\$\| $f\$" <<< "$LIST"; then echo "packed: $f"
+            elif unzip -p "$APK" assets/data.pck > /tmp/data.pck 2>/dev/null && grep -aq "$f" /tmp/data.pck; then echo "packed (pck): $f"
+            else echo "::error::$f is missing from the APK"; exit 1; fi
+          done
+          grep -E "map\.bin|\.pck" <<< "$LIST" || true
+
       - name: Export x86_64 test APK (emulator only, not published)
         continue-on-error: true
         run: |
