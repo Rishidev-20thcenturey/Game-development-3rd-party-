@@ -6,7 +6,8 @@ extends Node
 ##   * picks phone-friendly defaults on first launch: Low quality, fullscreen (immersive);
 ##   * shows the touch controls (touch_controls.gd) only while the player is driving;
 ##   * hides the keyboard hint strip (shown again once a gamepad is used);
-##   * moves the tachometer from the bottom-right corner (the pedal thumb) to the bottom centre;
+##   * moves the tachometer from the bottom-right corner (the pedal thumb) to the bottom centre
+##     and enlarges the pause menu to finger size;
 ##   * maps the Android Back button onto the game's own flow: pause while driving, back out
 ##     of menus, resume from pause, and quit from the title hub;
 ##   * pauses a drive and releases every held control when the app goes to the background.
@@ -18,6 +19,8 @@ const KeyHints := preload("res://scripts/ui/widgets/key_hints.gd")
 
 ## Tachometer scale on touch screens (the desktop gauge is 400 px).
 const TACH_SCALE := 0.62
+## Pause menu scale on touch screens: its 58 px buttons become finger-sized (~5-6 mm on a phone).
+const PAUSE_SCALE := 1.45
 
 var touch_enabled := false
 var controls: TouchControls
@@ -186,7 +189,8 @@ func _inject(action: StringName) -> void:
 
 # ---------------------------------------------------------------- HUD layout
 
-## Moves both HUDs' tachometers (race and liaison) to the bottom centre at TACH_SCALE.
+## Moves both HUDs' tachometers (race and liaison) to the bottom centre at TACH_SCALE, and
+## scales the pause menu by PAUSE_SCALE.
 ## hud.gd docks the 400 px gauge at x = -446 inside a zero-size holder anchored bottom-right;
 ## re-anchoring the holder at the bottom centre with this offset centres it. The holder is moved
 ## and scaled, never the inner node, because the HUD's enter/exit tweens animate the inner node.
@@ -213,4 +217,12 @@ func _adapt_hud() -> bool:
 		br.offset_bottom = 0.0
 		br.scale = Vector2(TACH_SCALE, TACH_SCALE)
 		done += 1
-	return done == 2
+	# Pause menu: its zero-size centre holder is anchored at the screen centre; the cascade tweens
+	# animate the children, never the holder, so scaling the holder grows the menu about the centre.
+	var pm: Node = ui.get("pause_menu")
+	if pm != null and pm.is_node_ready():
+		var center: Control = pm.get("_center")
+		if center != null:
+			center.scale = Vector2(PAUSE_SCALE, PAUSE_SCALE)
+			done += 1
+	return done == 3
