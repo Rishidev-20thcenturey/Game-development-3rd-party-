@@ -240,6 +240,24 @@ func _perf_lab_checks() -> void:
 	await _frames(3)
 	_check(Engine.max_fps == 0 and quad.visible and sun.shadow_enabled and int(perf.scale_i) == 0,
 			"lab: switches restore the normal look (scale %.2f)" % win.scaling_3d_scale)
+	# GPU profile: every step runs and everything is put back afterwards
+	game.set_paused(false)
+	await _seconds(0.3)
+	var cam_mask := root.get_camera_3d().cull_mask
+	var scale_before := win.scaling_3d_scale
+	await perf.run_profile()
+	var rows: Array = perf.profile_rows
+	_log("profile:\n" + str(perf.profile_text()))
+	_check(rows.size() == perf.PROFILE_STEPS.size(), "GPU profile ran all %d steps (%d)" % [perf.PROFILE_STEPS.size(), rows.size()])
+	var props: Node3D = main.map.get_node("Props")
+	var terrain: Node3D = main.map.get_node("Terrain")
+	_check(props.visible and terrain.visible and quad.visible and sun.shadow_enabled
+			and root.get_camera_3d().cull_mask == cam_mask and is_equal_approx(win.scaling_3d_scale, scale_before)
+			and bool(main.ui.visible) and bool(controls.visible) and perf._outline_cache.is_empty()
+			and not Input.is_action_pressed(&"handbrake") and Engine.max_fps == 0,
+			"GPU profile puts everything back (scale %.2f, mask %d)" % [win.scaling_3d_scale, root.get_camera_3d().cull_mask])
+	_check(bool(perf._results.visible) and bool(perf._panel.visible), "GPU profile shows its table in the lab")
+	await shot("09_profile")
 	perf.lab_open = false
 	perf.meter_on = false
 	game.set_paused(false)

@@ -200,3 +200,18 @@ Reaching 120 fps needs two things.
 The "test" switches change the look. They exist only to find the cost, and they reset on every launch. The real fix then targets that cost without changing the look, using the matching item in §2.
 
 The build also limits physics catch-up to 4 steps per frame on phones (A3).
+
+### GPU profile (one button)
+
+**Profile GPU (30 s, car still)** holds the handbrake and measures the GPU time per frame for 13 steps:
+- as played;
+- 3D resolution at 100%, 50% and 25%;
+- with each part switched off in turn: ink, colour grade, sun shadows, outline pass, trees/rocks/buildings, terrain/road/water, clouds/petals, HUD and touch buttons, and the whole 3D world.
+
+The table goes on the clipboard. How to read it:
+- **Resolution steps:** the slope shows how much of the GPU time is per pixel, and the 25% step shows the fixed cost.
+- **"Off" steps:** each one's saving is that part's cost.
+
+**First data point** (Lenovo Legion Y700 / TB320FC, Adreno 730, 2560×1600 at 144 Hz):
+- 30 fps at 3D 100%;
+- GPU 34.5 ms against CPU 8.4 ms, so it is **GPU-bound**.

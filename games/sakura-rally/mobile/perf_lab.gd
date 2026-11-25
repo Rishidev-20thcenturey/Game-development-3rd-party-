@@ -23,6 +23,25 @@ const SCALES := [0.0, 1.0, 0.85, 0.7, 0.5]
 ## unchanged; it only stops one slow frame from making the next one slower.
 const MAX_PHYSICS_STEPS := 4
 const SAMPLE_SECONDS := 0.5
+## GPU profile: each step switches one part of the frame off (or sets one 3D resolution) for
+## PROFILE_SETTLE + PROFILE_MEASURE seconds while the car is held still, and records the GPU time.
+const PROFILE_STEPS := [
+	["base", "As you play"],
+	["res100", "3D 100%"],
+	["res50", "3D 50%"],
+	["res25", "3D 25%"],
+	["ink", "Ink lines off"],
+	["grade", "Colour grade off"],
+	["shadows", "Sun shadows off"],
+	["outlines", "Outline pass off"],
+	["props", "Trees/rocks/buildings off"],
+	["ground", "Terrain/road/water off"],
+	["skyfx", "Clouds/petals off"],
+	["ui", "HUD + touch buttons off"],
+	["world", "Whole 3D world off"],
+]
+const PROFILE_SETTLE := 0.8
+const PROFILE_MEASURE := 1.7
 ## Process order: the stamp runs before every other node's _process, the lab after all of them,
 ## so the time between the two is the game's own script work for the frame (Godot's
 ## TIME_PROCESS monitor also includes drawing and waiting for the GPU, so it can't tell them apart).
@@ -56,6 +75,13 @@ var _report_btn: Button
 var _vp_rid: RID
 var _acc := {"t": 0.0, "n": 0, "worst": 0.0, "rcpu": 0.0, "gpu": 0.0, "logic": 0.0}
 var _stamp: Stamp
+var profiling := false
+## Results of the last GPU profile: [{key, label, fps, gpu, cpu, draws}].
+var profile_rows: Array[Dictionary] = []
+var _profile_scale := 0.0
+var _profile_btn: Button
+var _results: Label
+var _outline_cache := {} ## Material -> its outline next_pass, while the outline step runs
 
 
 func setup(mobile: Node, meter_default: bool) -> void:
@@ -158,6 +184,17 @@ func _build_panel() -> void:
 		b.pressed.connect(_on_row.bind(key))
 		col.add_child(b)
 		_rows[key] = b
+	_profile_btn = _button("Profile GPU (30 s, car still)", 24)
+	_profile_btn.name = "Lab_profile"
+	_profile_btn.custom_minimum_size = Vector2(0, 64)
+	_profile_btn.pressed.connect(run_profile)
+	col.add_child(_profile_btn)
+	_results = Label.new()
+	_results.name = "ProfileResults"
+	_results.add_theme_font_size_override("font_size", 17)
+	_results.add_theme_color_override("font_color", Color(0.95, 0.93, 0.88))
+	_results.visible = false
+	col.add_child(_results)
 	_report_btn = _button("Copy report", 24)
 	_report_btn.custom_minimum_size = Vector2(0, 64)
 	_report_btn.pressed.connect(copy_report)
@@ -243,7 +280,7 @@ func _restore_game_scale() -> void:
 ## setting changes, so this runs every frame but only writes what differs.
 func _enforce() -> void:
 	var win := get_window()
-	var s: float = SCALES[scale_i]
+	var s: float = _profile_scale if _profile_scale > 0.0 else SCALES[scale_i]
 	if s > 0.0 and not is_equal_approx(win.scaling_3d_scale, s):
 		win.scaling_3d_scale = s
 		win.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if s < 1.0 else Viewport.SCALING_3D_MODE_BILINEAR
@@ -326,7 +363,8 @@ func _process(delta: float) -> void:
 		"quality": str(game.get_setting("quality")) if game != null else "?",
 	}
 	_acc = {"t": 0.0, "n": 0, "worst": 0.0, "rcpu": 0.0, "gpu": 0.0, "logic": 0.0}
-	_meter.text = _meter_text()
+	if not profiling:
+		_meter.text = _meter_text()
 
 
 func _meter_text() -> String:
@@ -361,6 +399,188 @@ func copy_report() -> String:
 		get_tree().create_timer(1.5, true, false, true).timeout.connect(func() -> void:
 			_report_btn.text = "Copy report")
 	return text
+
+
+# ---------------------------------------------------------------- GPU profile
+
+## Holds the car still and measures the GPU time of the frame with each part switched off in
+## turn (PROFILE_STEPS). Shows the table in the lab and puts it on the clipboard.
+func run_profile() -> void:
+	if profiling:
+		return
+	profiling = true
+	profile_rows.clear()
+	lab_open = false
+	var game := _game()
+	if game != null and bool(game.paused):
+		game.set_paused(false)
+	var saved_cap := cap_i
+	cap_i = 0
+	_apply_cap()
+	Input.action_press(&"handbrake")
+	await _wait(1.5)
+	var i := 0
+	for step: Array in PROFILE_STEPS:
+		i += 1
+		_meter.text = "Profiling %d/%d: %s …\nKeep the car still, don't touch the screen." % [i, PROFILE_STEPS.size(), step[1]]
+		_profile_step(step[0], true)
+		await _wait(PROFILE_SETTLE)
+		var r := await _measure(PROFILE_MEASURE)
+		_profile_step(step[0], false)
+		r["key"] = step[0]
+		r["label"] = step[1]
+		profile_rows.append(r)
+	Input.action_release(&"handbrake")
+	cap_i = saved_cap
+	_apply_cap()
+	profiling = false
+	var text := profile_text()
+	DisplayServer.clipboard_set(text)
+	var f := FileAccess.open("user://perf_profile.txt", FileAccess.WRITE)
+	if f != null:
+		f.store_string(text + "\n")
+	_results.text = _profile_table() + "\n(copied to the clipboard)"
+	_results.visible = true
+	lab_open = true
+	if game != null and _mobile != null and _mobile.is_driving():
+		game.set_paused(true)
+
+
+func _wait(seconds: float) -> void:
+	await get_tree().create_timer(seconds, true, false, true).timeout
+
+
+func _measure(seconds: float) -> Dictionary:
+	var t := 0.0
+	var n := 0
+	var gpu := 0.0
+	var rcpu := 0.0
+	var draws := 0.0
+	while t < seconds:
+		await get_tree().process_frame
+		t += get_process_delta_time()
+		n += 1
+		gpu += RenderingServer.viewport_get_measured_render_time_gpu(_vp_rid)
+		rcpu += RenderingServer.viewport_get_measured_render_time_cpu(_vp_rid) + RenderingServer.get_frame_setup_time_cpu()
+		draws += Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)
+	n = maxi(n, 1)
+	return {"fps": n / maxf(t, 0.001), "gpu": gpu / n, "cpu": rcpu / n, "draws": roundi(draws / n)}
+
+
+var _saved := {}
+
+
+func _profile_step(key: String, on: bool) -> void:
+	var main := _main()
+	var map: Node = main.get("map") if main != null else null
+	match key:
+		"res100", "res50", "res25":
+			_profile_scale = ({"res100": 1.0, "res50": 0.5, "res25": 0.25}[key] as float) if on else 0.0
+			if not on and SCALES[scale_i] == 0.0:
+				_restore_game_scale()
+		"ink":
+			if on:
+				_saved["ink"] = ink_on
+			ink_on = false if on else bool(_saved.get("ink", true))
+		"grade":
+			if on:
+				_saved["grade"] = grade_on
+			grade_on = false if on else bool(_saved.get("grade", true))
+		"shadows":
+			if on:
+				_saved["shadows"] = shadows_on
+			shadows_on = false if on else bool(_saved.get("shadows", true))
+		"outlines":
+			_set_outlines(not on)
+		"props":
+			_set_visible(map, ["Props"], not on)
+		"ground":
+			_set_visible(map, ["Terrain", "Road", "Water"], not on)
+		"skyfx":
+			_set_visible(map, ["SkyRig"], not on)
+		"ui":
+			var ui: Node = main.get("ui") if main != null else null
+			if ui is CanvasLayer:
+				(ui as CanvasLayer).visible = not on
+			if _mobile != null and _mobile.get("controls") is CanvasLayer:
+				(_mobile.get("controls") as CanvasLayer).visible = not on
+		"world":
+			var cam := get_viewport().get_camera_3d()
+			if cam != null:
+				if on:
+					_saved["cull"] = cam.cull_mask
+					cam.cull_mask = 0
+				else:
+					cam.cull_mask = int(_saved.get("cull", 0xFFFFF))
+	_enforce()
+
+
+func _set_visible(map: Node, names: Array, on: bool) -> void:
+	if map == null:
+		return
+	for nm: String in names:
+		var n := map.get_node_or_null(NodePath(nm)) as Node3D
+		if n != null:
+			n.visible = on
+
+
+## Removes (on = false) or restores the outline hull passes of every material in the scene.
+func _set_outlines(on: bool) -> void:
+	if on:
+		for m: Material in _outline_cache:
+			m.next_pass = _outline_cache[m]
+		_outline_cache.clear()
+		return
+	var main := _main()
+	if main == null:
+		return
+	for node in main.find_children("*", "GeometryInstance3D", true, false):
+		var gi := node as GeometryInstance3D
+		var mats: Array = [gi.material_override]
+		var mesh: Mesh = null
+		if gi is MeshInstance3D:
+			var mi := gi as MeshInstance3D
+			mesh = mi.mesh
+			for k in mi.get_surface_override_material_count():
+				mats.append(mi.get_surface_override_material(k))
+		elif gi is MultiMeshInstance3D and (gi as MultiMeshInstance3D).multimesh != null:
+			mesh = (gi as MultiMeshInstance3D).multimesh.mesh
+		if mesh != null:
+			for k in mesh.get_surface_count():
+				mats.append(mesh.surface_get_material(k))
+		for m in mats:
+			var mat := m as Material
+			if mat != null and mat.next_pass != null and not _outline_cache.has(mat):
+				_outline_cache[mat] = mat.next_pass
+				mat.next_pass = null
+
+
+func _profile_table() -> String:
+	if profile_rows.is_empty():
+		return ""
+	var base: float = profile_rows[0]["gpu"]
+	var lines := PackedStringArray()
+	for r: Dictionary in profile_rows:
+		var d: float = float(r["gpu"]) - base
+		lines.append("%s: %d fps · GPU %.1f ms%s" % [r["label"], roundi(r["fps"]), r["gpu"],
+				"" if r["key"] == "base" else " (%+.1f)" % d])
+	return "\n".join(lines)
+
+
+## The full profile as plain text (device line, settings, one line per step).
+func profile_text() -> String:
+	var win := get_window()
+	var game := _game()
+	var head := "Sakura Rally GPU profile\ndevice: %s | %s | %s %s\nscreen: %dx%d @ %s Hz | quality %s | 3D scale %.2f\n" % [
+			OS.get_model_name(), RenderingServer.get_video_adapter_name(),
+			RenderingServer.get_current_rendering_method(), RenderingServer.get_video_adapter_api_version(),
+			win.size.x, win.size.y, str(roundi(DisplayServer.screen_get_refresh_rate())),
+			str(game.get_setting("quality")) if game != null else "?", win.scaling_3d_scale]
+	var lines := PackedStringArray()
+	for r: Dictionary in profile_rows:
+		lines.append("%-26s %5.1f fps  GPU %6.2f ms  render-CPU %5.2f ms  %4d draws" % [
+				r["label"], r["fps"], r["gpu"], r["cpu"], r["draws"]])
+	return head + "\n".join(lines)
 
 
 # ---------------------------------------------------------------- persistence
