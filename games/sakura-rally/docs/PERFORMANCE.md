@@ -144,3 +144,29 @@ On first launch, if the player never touched Quality, the game picks one by **GP
 - **Rival physics stays full-rate** for race fairness. Only their visual and audio extras are trimmed (A4).
 - **The GL Compatibility fallback** (phones without Vulkan) simplifies some post effects. It is a "runs at all" path, not a look target.
 - Lower memory use is a side effect of A2/A5 (the shadow atlas drops from about 256 MB to 16 MB), not the goal.
+
+---
+
+## 7. 120 fps on high-refresh screens
+
+Reaching 120 fps needs two things.
+
+**1. The screen must actually switch to 120 Hz for the game.**
+- Godot 4.7.2's Android code never asks for a refresh rate. There is no `Surface.setFrameRate` or `preferredDisplayModeId` anywhere in `platform/android/java` at tag `4.7.2-stable`.
+- So Android, or the maker's game service (e.g. Samsung Game Booster), decides, and it often keeps games at 60 Hz.
+- **Fix, in the mobile layer, no engine change:** Godot 4.4+ exposes the Android activity to scripts through the `AndroidRuntime` singleton and `JavaClassWrapper`.
+  1. On launch, read `Display.getSupportedModes()`.
+  2. Pick the highest-refresh mode at the current resolution.
+  3. Set the window's `preferredDisplayModeId` on the UI thread (`runOnUiThread`).
+
+  `preferredDisplayModeId` is a plain Java field and the wrapper only calls methods, so it is set via `Class.getField(...).setInt(...)`. This must be checked on a real device.
+
+**2. Every frame must finish in 8.3 ms, on both CPU and GPU.**
+- **Good news:** physics already ticks at 120 Hz, so at 120 fps every frame gets exactly one physics step, which is the smoothest possible case.
+- **Hard part:** the desktop `high` preset (MSAA 4×, 8192 / 4-cascade shadows, 3 full-screen passes, native resolution) is unlikely to fit in 8.3 ms on a phone GPU in the forest sections, even on a Snapdragon 8 Gen 1. And the 8 Gen 1 throttles under long full load.
+- **Realistic route:** apply Tier A plus B1 (85% render scale with FSR). Expected: 120 in open sections and 90–120 in dense forest on the 8 Gen 1. Only the overlay (§4) can confirm it.
+
+**Settings to ship:**
+- Frame rate: **Auto (match screen) / 120 / 90 / 60 / 30**.
+- On Auto, drop to 90 or 60 if the device stays above about 45 °C or misses frames for 10 s (`Performance` frame times plus Android thermal status).
+- 120 fps uses roughly twice the battery and heat of 60, so it should be the player's choice.
