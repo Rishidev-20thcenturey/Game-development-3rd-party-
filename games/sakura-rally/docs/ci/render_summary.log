@@ -1,0 +1,35 @@
+[   2.0s] CHECK ok   Mobile autoload in touch mode
+[   2.0s] CHECK ok   touch controls created
+[  84.6s] CHECK ok   touch controls hidden on the title hub
+[  84.6s] CHECK ok   Back on the title hub would quit (handler sees the hub)
+[  85.5s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/01_title.png
+[ 184.0s] CHECK ok   free roam reached
+[ 184.0s] CHECK ok   touch controls shown while driving
+[ 184.0s] CHECK ok   HUD tachometer moved to the bottom centre
+[ 184.0s] CHECK ok   player car exists
+[ 187.6s] CHECK ok   GAS touch presses throttle
+[ 232.5s] CHECK ok   car accelerates under touch throttle (88 km/h)
+[ 235.3s] CHECK ok   ▶ touch presses steer_right
+[ 236.5s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/02_drive_touch.png
+[ 254.7s] CHECK ok   car turns while ▶ is held (yaw 32.0°)
+[ 257.0s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
+[ 259.3s] CHECK ok   sliding GAS → BRAKE swaps the pedals
+[ 274.0s] CHECK ok   lifting every finger releases every action
+[ 278.1s] CHECK ok   multi-touch: GAS + HANDBRAKE together
+[ 280.6s] CHECK ok   camera button cycles chase -> chase_far
+[ 288.7s] CHECK ok   pause button pauses
+[ 288.7s] CHECK ok   touch controls hidden while paused
+[ 289.7s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/03_pause.png
+[ 296.4s] CHECK ok   Back on the pause menu resumes (resume)
+[ 306.6s] CHECK ok   Back while driving pauses (pause)
+[ 313.5s] CHECK ok   Back again resumes
+[ 320.8s] CHECK ok   background: drive paused, controls released
+[ 325.3s] CHECK ok   manual gearbox shows ▲ ▼
+[ 354.1s] CHECK ok   ▲ shifts up (gear 1 -> 2)
+[ 354.9s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/04_manual.png
+[ 437.7s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/05_countdown.png
+[ 467.8s] TIMEOUT (state=COUNTDOWN)
+[ 533.2s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/06_stage.png
+[ 533.2s] CHECK ok   time trial racing with touch controls
+[ 580.2s] CHECK ok   controls hidden again on the menu
+[ 580.2s] SUMMARY: 0 failures
