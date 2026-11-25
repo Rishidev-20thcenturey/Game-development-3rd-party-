@@ -1,54 +1,79 @@
 Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
 
-[   1.4s] CHECK ok   Mobile autoload in touch mode
-[   1.4s] CHECK ok   touch controls created
-[   5.0s] CHECK ok   touch controls hidden on the title hub
-[   5.0s] CHECK ok   Back on the title hub would quit (handler sees the hub)
-[   5.0s] CHECK ok   keyboard hint strip hidden on touch screens
-[   5.0s] TAP @Button@257 at (9.162228, 54.37154)
-[   6.5s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
-[   8.0s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
-[  14.6s] CHECK ok   free roam reached
-[  14.6s] CHECK ok   touch controls shown while driving
-[  14.6s] CHECK ok   HUD tachometer moved to the bottom centre
-[  14.6s] CHECK ok   player car exists
-[  14.8s] CHECK ok   GAS touch presses throttle
-[  17.6s] CHECK ok   car accelerates under touch throttle (88 km/h)
-[  17.8s] CHECK ok   ▶ touch presses steer_right
-[  19.0s] CHECK ok   car turns while ▶ is held (yaw 29.8°)
-[  19.2s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
-[  19.3s] CHECK ok   sliding GAS → BRAKE swaps the pedals
-[  20.5s] CHECK ok   lifting every finger releases every action
-[  20.8s] CHECK ok   multi-touch: GAS + HANDBRAKE together
-[  20.8s] CHECK ok   camera button cycles chase -> chase_far
-[  21.3s] CHECK ok   pause button pauses
-[  21.3s] CHECK ok   touch controls hidden while paused
-[  21.8s] CHECK ok   Back on the pause menu resumes (resume)
-[  22.5s] CHECK ok   Back while driving pauses (pause)
-[  23.1s] CHECK ok   Back again resumes
-[  23.6s] CHECK ok   background: drive paused, controls released
-[  23.9s] CHECK ok   performance lab created
-[  23.9s] CHECK ok   perf meter hidden by default off-phone (clean screenshots)
-[  25.4s] CHECK ok   perf meter shows fps, CPU and GPU time (145 fps  6.9 ms (worst 7)  ·  limit: CPU? (no GPU timer) | CPU 1.1 ms  [game logic 0.4 · physics 0.7×1 · render 0.0]   GPU 0.0 ms | 3D 48×48 (75%) · ? Hz · 0 draws · 0k tris · Low)
-[  25.4s] physics catch-up limit: 12 steps per frame
-[  25.4s] TAP PerfMeter at (51.66667, 2.233333)
-[  25.8s] CHECK ok   tapping the meter pauses and opens the lab
-[  25.8s] TAP Lab_scale at (54.86667, 27.83333)
-[  25.8s] TAP Lab_scale at (54.86667, 27.83333)
-[  25.9s] CHECK ok   lab: 3D resolution 85% (scale 0.85)
-[  25.9s] TAP Lab_ink at (54.86667, 32.63334)
-[  25.9s] TAP Lab_shadows at (54.86667, 30.23334)
-[  26.0s] CHECK ok   lab: ink lines off
-[  26.0s] CHECK ok   lab: sun shadows off
-[  26.0s] TAP Lab_cap at (54.86667, 25.43333)
-[  26.0s] CHECK ok   lab: frame-rate cap 120 (max_fps 120)
-[  26.0s] CHECK ok   lab: report copied
-[  26.0s] CHECK ok   lab: switches restore the normal look (scale 0.75)
-[  26.4s] CHECK ok   lab closed, drive resumed
-[  26.4s] CHECK ok   manual gearbox shows ▲ ▼
-[  28.8s] CHECK ok   ▲ shifts up (gear 1 -> 2)
-[  40.9s] CHECK ok   time trial racing with touch controls
-[  43.6s] CHECK ok   controls hidden again on the menu
-[  44.6s] TAP @Button@243 at (10.25387, 50.668)
-[  46.3s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
-[  49.3s] SUMMARY: 0 failures
+[   1.7s] CHECK ok   Mobile autoload in touch mode
+[   1.7s] CHECK ok   touch controls created
+[   5.3s] CHECK ok   touch controls hidden on the title hub
+[   5.3s] CHECK ok   Back on the title hub would quit (handler sees the hub)
+[   5.3s] CHECK ok   keyboard hint strip hidden on touch screens
+[   5.3s] TAP @Button@257 at (9.159663, 54.37004)
+[   6.9s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
+[   8.4s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
+[  14.9s] CHECK ok   free roam reached
+[  14.9s] CHECK ok   touch controls shown while driving
+[  14.9s] CHECK ok   HUD tachometer moved to the bottom centre
+[  14.9s] CHECK ok   player car exists
+[  15.2s] CHECK ok   GAS touch presses throttle
+[  18.0s] CHECK ok   car accelerates under touch throttle (88 km/h)
+[  18.1s] CHECK ok   ▶ touch presses steer_right
+[  19.3s] CHECK ok   car turns while ▶ is held (yaw 30.1°)
+[  19.5s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
+[  19.6s] CHECK ok   sliding GAS → BRAKE swaps the pedals
+[  20.8s] CHECK ok   lifting every finger releases every action
+[  21.1s] CHECK ok   multi-touch: GAS + HANDBRAKE together
+[  21.1s] CHECK ok   camera button cycles chase -> chase_far
+[  21.6s] CHECK ok   pause button pauses
+[  21.6s] CHECK ok   touch controls hidden while paused
+[  22.2s] CHECK ok   Back on the pause menu resumes (resume)
+[  22.9s] CHECK ok   Back while driving pauses (pause)
+[  23.4s] CHECK ok   Back again resumes
+[  23.9s] CHECK ok   background: drive paused, controls released
+[  24.2s] CHECK ok   performance lab created
+[  24.2s] CHECK ok   perf meter hidden by default off-phone (clean screenshots)
+[  25.7s] CHECK ok   perf meter shows fps, CPU and GPU time (145 fps  6.9 ms (worst 7)  ·  limit: CPU? (no GPU timer) | CPU 1.5 ms  [game logic 0.5 · physics 1.1×1 · render 0.0]   GPU 0.0 ms | 3D 48×48 (75%) · ? Hz · 0 draws · 0k tris · Low)
+[  25.7s] physics catch-up limit: 12 steps per frame
+[  25.7s] TAP PerfMeter at (51.66667, 2.233333)
+[  26.1s] CHECK ok   tapping the meter pauses and opens the lab
+[  26.1s] TAP Lab_scale at (54.86667, 26.63334)
+[  26.2s] TAP Lab_scale at (54.86667, 26.63334)
+[  26.2s] CHECK ok   lab: 3D resolution 85% (scale 0.85)
+[  26.2s] TAP Lab_ink at (54.86667, 31.43333)
+[  26.2s] TAP Lab_shadows at (54.86667, 29.03333)
+[  26.3s] CHECK ok   lab: ink lines off
+[  26.3s] CHECK ok   lab: sun shadows off
+[  26.3s] TAP Lab_cap at (54.86667, 24.23334)
+[  26.3s] CHECK ok   lab: frame-rate cap 120 (max_fps 120)
+[  26.3s] CHECK ok   lab: report copied
+[  26.4s] CHECK ok   lab: switches restore the normal look (scale 0.75)
+[  60.7s] profile:
+Sakura Rally GPU profile
+device: GenericDevice |  | forward_plus 
+screen: 64x64 @ -1 Hz | quality low | 3D scale 0.75
+As you play                145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+3D 100%                    145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+3D 50%                     144.4 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+3D 25%                     145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Ink lines off              145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Colour grade off           145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Sun shadows off            145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Outline pass off           145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Trees/rocks/buildings off  145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Terrain/road/water off     145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Clouds/petals off          145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+HUD + touch buttons off    145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Whole 3D world off         145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+[  60.7s] CHECK ok   GPU profile ran all 13 steps (13)
+[  60.7s] CHECK ok   GPU profile puts everything back (scale 0.75, mask 1048575)
+[  60.7s] CHECK FAIL GPU profile shows its table in the lab
+[  61.1s] CHECK ok   lab closed, drive resumed
+[  61.1s] CHECK ok   manual gearbox shows ▲ ▼
+[  63.4s] CHECK ok   ▲ shifts up (gear 1 -> 2)
+[  75.5s] CHECK ok   time trial racing with touch controls
+[  78.2s] CHECK ok   controls hidden again on the menu
+[  79.2s] TAP @Button@243 at (10.39576, 50.72)
+[  81.0s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
+[  84.0s] SUMMARY: 1 failures
+[  84.0s]   FAIL GPU profile shows its table in the lab
+WARNING: 14 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 7 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
