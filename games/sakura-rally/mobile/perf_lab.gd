@@ -79,6 +79,8 @@ var profiling := false
 ## Results of the last GPU profile: [{key, label, fps, gpu, cpu, draws}].
 var profile_rows: Array[Dictionary] = []
 var _profile_scale := 0.0
+## CI shortens the profile (software rendering is very slow); 1.0 on devices.
+var profile_time_scale := 1.0
 var _profile_btn: Button
 var _results: Label
 var _outline_cache := {} ## Material -> its outline next_pass, while the outline step runs
@@ -418,14 +420,14 @@ func run_profile() -> void:
 	cap_i = 0
 	_apply_cap()
 	Input.action_press(&"handbrake")
-	await _wait(1.5)
+	await _wait(1.5 * profile_time_scale)
 	var i := 0
 	for step: Array in PROFILE_STEPS:
 		i += 1
 		_meter.text = "Profiling %d/%d: %s …\nKeep the car still, don't touch the screen." % [i, PROFILE_STEPS.size(), step[1]]
 		_profile_step(step[0], true)
-		await _wait(PROFILE_SETTLE)
-		var r := await _measure(PROFILE_MEASURE)
+		await _wait(PROFILE_SETTLE * profile_time_scale)
+		var r := await _measure(PROFILE_MEASURE * profile_time_scale)
 		_profile_step(step[0], false)
 		r["key"] = step[0]
 		r["label"] = step[1]
@@ -444,6 +446,7 @@ func run_profile() -> void:
 	lab_open = true
 	if game != null and _mobile != null and _mobile.is_driving():
 		game.set_paused(true)
+	_update_visibility()
 
 
 func _wait(seconds: float) -> void:

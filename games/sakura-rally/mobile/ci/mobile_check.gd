@@ -245,7 +245,9 @@ func _perf_lab_checks() -> void:
 	await _seconds(0.3)
 	var cam_mask := root.get_camera_3d().cull_mask
 	var scale_before := win.scaling_3d_scale
+	perf.profile_time_scale = 0.1
 	await perf.run_profile()
+	await _frames(2)
 	var rows: Array = perf.profile_rows
 	_log("profile:\n" + str(perf.profile_text()))
 	_check(rows.size() == perf.PROFILE_STEPS.size(), "GPU profile ran all %d steps (%d)" % [perf.PROFILE_STEPS.size(), rows.size()])
