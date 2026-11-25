@@ -1,53 +1,55 @@
-[   1.5s] CHECK ok   Mobile autoload in touch mode
-[   1.5s] CHECK ok   touch controls created
-[  82.9s] CHECK ok   touch controls hidden on the title hub
-[  82.9s] CHECK ok   Back on the title hub would quit (handler sees the hub)
-[  82.9s] CHECK ok   keyboard hint strip hidden on touch screens
-[  83.8s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/01_title.png
-[ 107.4s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
-[ 108.2s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/01b_time_attack.png
-[ 128.4s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
-[ 219.8s] CHECK ok   free roam reached
-[ 219.8s] CHECK ok   touch controls shown while driving
-[ 219.8s] CHECK ok   HUD tachometer moved to the bottom centre
-[ 219.8s] CHECK ok   player car exists
-[ 223.2s] CHECK ok   GAS touch presses throttle
-[ 263.6s] CHECK ok   car accelerates under touch throttle (88 km/h)
-[ 266.0s] CHECK ok   ▶ touch presses steer_right
-[ 267.0s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/02_drive_touch.png
-[ 283.0s] CHECK ok   car turns while ▶ is held (yaw 32.0°)
-[ 285.1s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
-[ 287.2s] CHECK ok   sliding GAS → BRAKE swaps the pedals
-[ 300.1s] CHECK ok   lifting every finger releases every action
-[ 303.7s] CHECK ok   multi-touch: GAS + HANDBRAKE together
-[ 306.0s] CHECK ok   camera button cycles chase -> chase_far
-[ 313.1s] CHECK ok   pause button pauses
-[ 313.1s] CHECK ok   touch controls hidden while paused
-[ 313.9s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/03_pause.png
-[ 319.8s] CHECK ok   Back on the pause menu resumes (resume)
-[ 328.9s] CHECK ok   Back while driving pauses (pause)
-[ 335.2s] CHECK ok   Back again resumes
-[ 341.9s] CHECK ok   background: drive paused, controls released
-[ 346.0s] CHECK ok   performance lab created
-[ 346.0s] CHECK ok   perf meter hidden by default off-phone (clean screenshots)
-[ 362.6s] CHECK ok   perf meter shows fps, CPU and GPU time (30 fps  33.3 ms (worst 33)  ·  limit: CPU | CPU 396.5 ms  [scripts 389.1 · physics 1.5×4 · render 1.4]   GPU 355.9 ms | 3D 1200×675 (75%) · -9223372036854775808 Hz · 730 draws · 710k tris · Low)
-[ 369.4s] CHECK ok   tapping the meter pauses and opens the lab
-[ 375.0s] CHECK ok   lab: 3D resolution 85% (scale 0.85)
-[ 381.6s] CHECK ok   lab: ink lines off
-[ 381.6s] CHECK ok   lab: sun shadows off
-[ 385.3s] CHECK ok   lab: frame-rate cap 120 (max_fps 120)
-[ 386.0s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/08_perf_lab.png
-[ 386.0s] CHECK ok   lab: report copied
-[ 386.9s] CHECK ok   lab: switches restore the normal look (scale 0.75)
-[ 391.7s] CHECK ok   lab closed, drive resumed
-[ 391.7s] CHECK ok   manual gearbox shows ▲ ▼
-[ 418.0s] CHECK ok   ▲ shifts up (gear 1 -> 2)
-[ 418.8s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/04_manual.png
-[ 493.4s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/05_countdown.png
-[ 523.5s] TIMEOUT (state=COUNTDOWN)
-[ 585.0s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/06_stage.png
-[ 585.0s] CHECK ok   time trial racing with touch controls
-[ 629.1s] CHECK ok   controls hidden again on the menu
-[ 672.4s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
-[ 708.7s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/07_campaign.png
-[ 708.7s] SUMMARY: 0 failures
+[   1.9s] CHECK ok   Mobile autoload in touch mode
+[   1.9s] CHECK ok   touch controls created
+[ 107.2s] CHECK ok   touch controls hidden on the title hub
+[ 107.2s] CHECK ok   Back on the title hub would quit (handler sees the hub)
+[ 107.2s] CHECK ok   keyboard hint strip hidden on touch screens
+[ 108.3s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/01_title.png
+[ 139.8s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
+[ 140.9s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/01b_time_attack.png
+[ 168.2s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
+[ 258.6s] TIMEOUT (state=INTRO)
+[ 290.1s] CHECK ok   free roam reached
+[ 290.1s] CHECK ok   touch controls shown while driving
+[ 290.1s] CHECK ok   HUD tachometer moved to the bottom centre
+[ 290.1s] CHECK ok   player car exists
+[ 295.1s] CHECK ok   GAS touch presses throttle
+[ 354.1s] CHECK ok   car accelerates under touch throttle (88 km/h)
+[ 357.6s] CHECK ok   ▶ touch presses steer_right
+[ 359.1s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/02_drive_touch.png
+[ 382.0s] CHECK ok   car turns while ▶ is held (yaw 33.1°)
+[ 384.9s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
+[ 387.7s] CHECK ok   sliding GAS → BRAKE swaps the pedals
+[ 405.5s] CHECK ok   lifting every finger releases every action
+[ 410.3s] CHECK ok   multi-touch: GAS + HANDBRAKE together
+[ 413.2s] CHECK ok   camera button cycles chase -> chase_far
+[ 423.5s] CHECK ok   pause button pauses
+[ 423.5s] CHECK ok   touch controls hidden while paused
+[ 424.6s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/03_pause.png
+[ 432.9s] CHECK ok   Back on the pause menu resumes (resume)
+[ 445.5s] CHECK ok   Back while driving pauses (pause)
+[ 454.3s] CHECK ok   Back again resumes
+[ 463.6s] CHECK ok   background: drive paused, controls released
+[ 469.2s] CHECK ok   performance lab created
+[ 469.2s] CHECK ok   perf meter hidden by default off-phone (clean screenshots)
+[ 492.4s] CHECK ok   perf meter shows fps, CPU and GPU time (30 fps  33.3 ms (worst 33)  ·  limit: GPU | CPU 10.5 ms  [game logic 0.8 · physics 2.0×4 · render 1.7]   GPU 497.9 ms | 3D 1200×675 (75%) · ? Hz · 714 draws · 692k tris · Low)
+[ 502.0s] CHECK ok   tapping the meter pauses and opens the lab
+[ 510.1s] CHECK ok   lab: 3D resolution 85% (scale 0.85)
+[ 519.4s] CHECK ok   lab: ink lines off
+[ 519.4s] CHECK ok   lab: sun shadows off
+[ 524.6s] CHECK ok   lab: frame-rate cap 120 (max_fps 120)
+[ 525.6s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/08_perf_lab.png
+[ 525.6s] CHECK ok   lab: report copied
+[ 526.7s] CHECK ok   lab: switches restore the normal look (scale 0.75)
+[ 533.3s] CHECK ok   lab closed, drive resumed
+[ 533.3s] CHECK ok   manual gearbox shows ▲ ▼
+[ 568.6s] CHECK ok   ▲ shifts up (gear 1 -> 2)
+[ 569.5s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/04_manual.png
+[ 659.6s] TIMEOUT (state=INTRO)
+[ 673.7s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/05_countdown.png
+[ 704.3s] TIMEOUT (state=COUNTDOWN)
+[ 791.2s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/06_stage.png
+[ 791.2s] CHECK ok   time trial racing with touch controls
+[ 853.0s] CHECK ok   controls hidden again on the menu
+[ 912.9s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
+[ 960.7s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/07_campaign.png
+[ 960.7s] SUMMARY: 0 failures

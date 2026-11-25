@@ -1,58 +1,54 @@
 Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
 
-[   1.3s] CHECK ok   Mobile autoload in touch mode
-[   1.3s] CHECK ok   touch controls created
-[   4.7s] CHECK ok   touch controls hidden on the title hub
-[   4.7s] CHECK ok   Back on the title hub would quit (handler sees the hub)
-[   4.7s] CHECK ok   keyboard hint strip hidden on touch screens
-[   4.7s] TAP @Button@257 at (9.16552, 54.37349)
-[   6.2s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
-[   7.7s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
-[  14.3s] CHECK ok   free roam reached
-[  14.3s] CHECK ok   touch controls shown while driving
-[  14.3s] CHECK ok   HUD tachometer moved to the bottom centre
-[  14.3s] CHECK ok   player car exists
-[  14.5s] CHECK ok   GAS touch presses throttle
-[  17.3s] CHECK ok   car accelerates under touch throttle (88 km/h)
-[  17.5s] CHECK ok   ▶ touch presses steer_right
-[  18.7s] CHECK ok   car turns while ▶ is held (yaw 29.8°)
-[  18.8s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
-[  19.0s] CHECK ok   sliding GAS → BRAKE swaps the pedals
-[  20.2s] CHECK ok   lifting every finger releases every action
-[  20.5s] CHECK ok   multi-touch: GAS + HANDBRAKE together
-[  20.5s] CHECK ok   camera button cycles chase -> chase_far
-[  21.0s] CHECK ok   pause button pauses
-[  21.0s] CHECK ok   touch controls hidden while paused
-[  21.5s] CHECK ok   Back on the pause menu resumes (resume)
-[  22.2s] CHECK ok   Back while driving pauses (pause)
-[  22.7s] CHECK ok   Back again resumes
-[  23.3s] CHECK ok   background: drive paused, controls released
-[  23.6s] CHECK ok   performance lab created
-[  23.6s] CHECK ok   perf meter hidden by default off-phone (clean screenshots)
-[  25.1s] CHECK ok   perf meter shows fps, CPU and GPU time (145 fps  6.9 ms (worst 7)  ·  limit: CPU | CPU 1.1 ms  [scripts 0.6 · physics 0.5×1 · render 0.0]   GPU 0.0 ms | 3D 48×48 (75%) · -1 Hz · 0 draws · 0k tris · Low)
-[  25.1s] physics catch-up limit: 12 steps per frame
-[  25.1s] TAP PerfMeter at (52.33334, 2.233333)
-[  25.5s] CHECK ok   tapping the meter pauses and opens the lab
-[  25.5s] TAP Lab_scale at (54.86667, 27.83333)
-[  25.5s] TAP Lab_scale at (54.86667, 27.83333)
-[  25.6s] CHECK ok   lab: 3D resolution 85% (scale 0.85)
-[  25.6s] TAP Lab_ink at (54.86667, 32.63334)
-[  25.6s] TAP Lab_shadows at (54.86667, 30.23334)
-[  25.7s] CHECK ok   lab: ink lines off
-[  25.7s] CHECK ok   lab: sun shadows off
-[  25.7s] TAP Lab_cap at (54.86667, 25.43333)
-[  25.7s] CHECK ok   lab: frame-rate cap 120 (max_fps 120)
-[  25.7s] CHECK ok   lab: report copied
-[  25.7s] CHECK ok   lab: switches restore the normal look (scale 0.75)
-[  26.1s] CHECK ok   lab closed, drive resumed
-[  26.1s] CHECK ok   manual gearbox shows ▲ ▼
-[  28.5s] CHECK ok   ▲ shifts up (gear 1 -> 2)
-[  40.6s] CHECK ok   time trial racing with touch controls
-[  43.3s] CHECK ok   controls hidden again on the menu
-[  44.3s] TAP @Button@243 at (10.31957, 50.76865)
-[  46.0s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
-[  49.0s] SUMMARY: 0 failures
-WARNING: 14 ObjectDB instances were leaked at exit (run with `--verbose` for details).
-   at: cleanup (core/object/object.cpp:2536)
-ERROR: 7 resources still in use at exit (run with --verbose for details).
-   at: clear (core/io/resource.cpp:822)
+[   1.4s] CHECK ok   Mobile autoload in touch mode
+[   1.4s] CHECK ok   touch controls created
+[   5.0s] CHECK ok   touch controls hidden on the title hub
+[   5.0s] CHECK ok   Back on the title hub would quit (handler sees the hub)
+[   5.0s] CHECK ok   keyboard hint strip hidden on touch screens
+[   5.0s] TAP @Button@257 at (9.162228, 54.37154)
+[   6.5s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
+[   8.0s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
+[  14.6s] CHECK ok   free roam reached
+[  14.6s] CHECK ok   touch controls shown while driving
+[  14.6s] CHECK ok   HUD tachometer moved to the bottom centre
+[  14.6s] CHECK ok   player car exists
+[  14.8s] CHECK ok   GAS touch presses throttle
+[  17.6s] CHECK ok   car accelerates under touch throttle (88 km/h)
+[  17.8s] CHECK ok   ▶ touch presses steer_right
+[  19.0s] CHECK ok   car turns while ▶ is held (yaw 29.8°)
+[  19.2s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
+[  19.3s] CHECK ok   sliding GAS → BRAKE swaps the pedals
+[  20.5s] CHECK ok   lifting every finger releases every action
+[  20.8s] CHECK ok   multi-touch: GAS + HANDBRAKE together
+[  20.8s] CHECK ok   camera button cycles chase -> chase_far
+[  21.3s] CHECK ok   pause button pauses
+[  21.3s] CHECK ok   touch controls hidden while paused
+[  21.8s] CHECK ok   Back on the pause menu resumes (resume)
+[  22.5s] CHECK ok   Back while driving pauses (pause)
+[  23.1s] CHECK ok   Back again resumes
+[  23.6s] CHECK ok   background: drive paused, controls released
+[  23.9s] CHECK ok   performance lab created
+[  23.9s] CHECK ok   perf meter hidden by default off-phone (clean screenshots)
+[  25.4s] CHECK ok   perf meter shows fps, CPU and GPU time (145 fps  6.9 ms (worst 7)  ·  limit: CPU? (no GPU timer) | CPU 1.1 ms  [game logic 0.4 · physics 0.7×1 · render 0.0]   GPU 0.0 ms | 3D 48×48 (75%) · ? Hz · 0 draws · 0k tris · Low)
+[  25.4s] physics catch-up limit: 12 steps per frame
+[  25.4s] TAP PerfMeter at (51.66667, 2.233333)
+[  25.8s] CHECK ok   tapping the meter pauses and opens the lab
+[  25.8s] TAP Lab_scale at (54.86667, 27.83333)
+[  25.8s] TAP Lab_scale at (54.86667, 27.83333)
+[  25.9s] CHECK ok   lab: 3D resolution 85% (scale 0.85)
+[  25.9s] TAP Lab_ink at (54.86667, 32.63334)
+[  25.9s] TAP Lab_shadows at (54.86667, 30.23334)
+[  26.0s] CHECK ok   lab: ink lines off
+[  26.0s] CHECK ok   lab: sun shadows off
+[  26.0s] TAP Lab_cap at (54.86667, 25.43333)
+[  26.0s] CHECK ok   lab: frame-rate cap 120 (max_fps 120)
+[  26.0s] CHECK ok   lab: report copied
+[  26.0s] CHECK ok   lab: switches restore the normal look (scale 0.75)
+[  26.4s] CHECK ok   lab closed, drive resumed
+[  26.4s] CHECK ok   manual gearbox shows ▲ ▼
+[  28.8s] CHECK ok   ▲ shifts up (gear 1 -> 2)
+[  40.9s] CHECK ok   time trial racing with touch controls
+[  43.6s] CHECK ok   controls hidden again on the menu
+[  44.6s] TAP @Button@243 at (10.25387, 50.668)
+[  46.3s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
+[  49.3s] SUMMARY: 0 failures
