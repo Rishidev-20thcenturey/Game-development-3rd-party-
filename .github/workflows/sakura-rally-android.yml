@@ -132,6 +132,24 @@ jobs:
             2>&1 | tee render.log | grep -E "CHECK|SUMMARY|SHOT|FAIL|ERROR|TIMEOUT"
           ls -la "$OUT/shots"
 
+      - name: Report test results as annotations
+        if: always()
+        run: |
+          for f in mobile_check flows render; do
+            [ -f "$f.log" ] || { echo "::warning title=$f::no log"; continue; }
+            ok=$(grep -cE 'CHECK (ok|PASS)' "$f.log" || true); bad=$(grep -c 'CHECK FAIL' "$f.log" || true)
+            echo "::notice title=$f::${ok} checks ok, ${bad} failed$(grep -m1 -o 'SUMMARY.*' "$f.log" | sed 's/^/ — /')"
+            grep 'CHECK FAIL' "$f.log" | head -n 15 | sed "s/^.*CHECK FAIL/::warning title=$f FAIL::/" || true
+            grep -E 'SCRIPT ERROR|Parse Error|TIMEOUT' "$f.log" | sort | uniq -c | sort -rn | head -n 5 | sed "s/^/::warning title=$f error::/" || true
+          done
+          if [ -f import.log ]; then
+            echo "::notice title=import::$(grep -c -E '^ERROR|SCRIPT ERROR' import.log || true) error lines"
+            grep -E '^ERROR|SCRIPT ERROR' import.log | sort | uniq -c | sort -rn | head -n 5 | sed 's/^/::warning title=import error::/' || true
+          fi
+          if [ -f export.log ]; then
+            grep -iE 'error|failed' export.log | head -n 8 | sed 's/^/::warning title=export::/' || true
+          fi
+
       - name: Restore preview signing key
         uses: actions/cache@v4
         with:
@@ -230,12 +248,12 @@ jobs:
           echo "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/$(basename "$APK")" | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Commit preview screenshots + build info
-        if: github.event_name == 'push'
+        if: always() && github.event_name == 'push'
         run: |
           set -euo pipefail
           D=games/sakura-rally/docs/ci
           mkdir -p "$D"
-          python3 -m pip install -q --user pillow
+          python3 -m pip install -q --user pillow || true
           python3 - "$OUT/shots" "$D" <<'PY'
           import sys, pathlib
           from PIL import Image
@@ -246,17 +264,18 @@ jobs:
           PY
           {
             echo "apk: SakuraRally-v${VERSION_NAME}.apk"
-            echo "size_bytes: $(stat -c %s "$APK")"
-            echo "sha256: $(cut -d' ' -f1 "$APK.sha256")"
+            echo "size_bytes: $(stat -c %s "${APK:-none}" 2>/dev/null || echo none)"
+            echo "sha256: $(cut -d' ' -f1 "${APK:-none}.sha256" 2>/dev/null || echo none)"
             echo "signing: ${SIGNING}"
             echo "upstream: ${UPSTREAM_REPO}@${UPSTREAM_SHA}"
             echo "godot: ${GODOT_VERSION}-${GODOT_FLAVOR}"
             echo "source_commit: ${GITHUB_SHA}"
-            echo "mobile_check: $(grep -c 'CHECK ok' mobile_check.log || true) ok, $(grep -c 'CHECK FAIL' mobile_check.log || true) failed"
-            echo "upstream_flows: $(grep -c 'CHECK ok' flows.log || true) ok, $(grep -c 'CHECK FAIL' flows.log || true) failed"
-            echo "rendered_check: $(grep -c 'CHECK ok' render.log || true) ok, $(grep -c 'CHECK FAIL' render.log || true) failed"
+            echo "mobile_check: $(grep -cE 'CHECK (ok|PASS)' mobile_check.log || true) ok, $(grep -c 'CHECK FAIL' mobile_check.log || true) failed"
+            echo "upstream_flows: $(grep -cE 'CHECK (ok|PASS)' flows.log || true) ok, $(grep -c 'CHECK FAIL' flows.log || true) failed"
+            echo "rendered_check: $(grep -cE 'CHECK (ok|PASS)' render.log || true) ok, $(grep -c 'CHECK FAIL' render.log || true) failed"
           } > "$D/build-info.txt"
-          cp mobile_check.log "$D/mobile_check.log"
+          cp mobile_check.log "$D/mobile_check.log" 2>/dev/null || true
+          for f in import export; do if [ -f $f.log ]; then tail -n 200 $f.log > "$D/${f}_tail.log"; fi; done
           grep -E "CHECK|SUMMARY|TIMEOUT" flows.log > "$D/flows_summary.log" || true
           grep -E "CHECK|SUMMARY|SHOT|TIMEOUT" render.log > "$D/render_summary.log" || true
           git config user.name "github-actions[bot]"

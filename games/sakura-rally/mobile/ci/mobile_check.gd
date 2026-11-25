@@ -44,6 +44,7 @@ func _run() -> void:
 	await _seconds(2.5)
 	_check(not bool(controls.active), "touch controls hidden on the title hub")
 	_check(mobile._on_title_hub(), "Back on the title hub would quit (handler sees the hub)")
+	_check(mobile.hints_hidden(), "keyboard hint strip hidden on touch screens")
 	await shot("01_title")
 
 	# ------------------------------------------------------------ free roam, driven by touch

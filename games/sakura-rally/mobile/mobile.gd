@@ -5,6 +5,7 @@ extends Node
 ## is started with `-- --touch`, which CI uses for previews and tests. On phones it:
 ##   * picks phone-friendly defaults on first launch: Low quality, fullscreen (immersive);
 ##   * shows the touch controls (touch_controls.gd) only while the player is driving;
+##   * hides the keyboard hint strip (shown again once a gamepad is used);
 ##   * moves the tachometer from the bottom-right corner (the pedal thumb) to the bottom centre;
 ##   * maps the Android Back button onto the game's own flow: pause while driving, back out
 ##     of menus, resume from pause, and quit from the title hub;
@@ -13,6 +14,7 @@ extends Node
 ## InputMap actions and ui_cancel, the same paths the keyboard and gamepad already use.
 
 const TouchControls := preload("res://mobile/touch_controls.gd")
+const KeyHints := preload("res://scripts/ui/widgets/key_hints.gd")
 
 ## Tachometer scale on touch screens (the desktop gauge is 400 px).
 const TACH_SCALE := 0.62
@@ -21,6 +23,9 @@ var touch_enabled := false
 var controls: TouchControls
 
 var _hud_done := false
+## Keyboard hint strips ([W][A][S][D] Drive…): hidden on touch screens until a gamepad is used.
+var _hints: Array[Control] = []
+var _gamepad_seen := false
 
 
 func _ready() -> void:
@@ -35,6 +40,35 @@ func _ready() -> void:
 	controls = TouchControls.new()
 	controls.name = "TouchControls"
 	add_child(controls)
+	get_tree().node_added.connect(_on_node_added)
+
+
+func _on_node_added(node: Node) -> void:
+	if node.get_script() == KeyHints:
+		var c := node as Control
+		_hints.append(c)
+		c.self_modulate.a = 1.0 if _gamepad_seen else 0.0
+
+
+func _input(event: InputEvent) -> void:
+	if _gamepad_seen or not touch_enabled:
+		return
+	if event is InputEventJoypadButton:
+		_gamepad_seen = true
+		for c in _hints:
+			if is_instance_valid(c):
+				c.self_modulate.a = 1.0
+
+
+## For CI: true when every keyboard hint strip on screen is hidden.
+func hints_hidden() -> bool:
+	var n := 0
+	for c in _hints:
+		if is_instance_valid(c) and c.is_inside_tree():
+			n += 1
+			if c.self_modulate.a > 0.01:
+				return false
+	return n > 0
 
 
 func _first_run_defaults() -> void:
