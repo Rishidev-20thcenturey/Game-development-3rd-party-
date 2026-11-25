@@ -15,7 +15,9 @@ On budget phones (Snapdragon 680, Helio G85, Exynos 850 class) both are about 3�
 
 ## 1. Where the load comes from today
 
-The game's default quality preset is **`high`** (`scripts/game/quality.gd`; default set in `scripts/autoload/game.gd`). It is applied on every map load and **overrides** the lighter phone settings our build puts in `project.godot`. So every phone currently runs the desktop High setting.
+The game's own default quality preset is **`high`** (`scripts/game/quality.gd`, `scripts/autoload/game.gd`). It is applied on every map load and overrides the phone settings our build puts in `project.godot`. **However, our mobile layer switches a fresh install to `low`** (`mobile.gd`, `_first_run_defaults`). So phones start on Low unless the player picks another preset in Settings.
+
+**First real measurement:** Snapdragon 8 Gen 1 tablet, 144 Hz screen: **about 40 fps**, on Low unless changed. So the frame cost is mostly *not* in what the presets switch. The tables below list every cost source; the **performance lab** in the test build (§8) measures which one dominates.
 
 ### CPU load
 
@@ -170,3 +172,31 @@ Reaching 120 fps needs two things.
 - Frame rate: **Auto (match screen) / 120 / 90 / 60 / 30**.
 - On Auto, drop to 90 or 60 if the device stays above about 45 °C or misses frames for 10 s (`Performance` frame times plus Android thermal status).
 - 120 fps uses roughly twice the battery and heat of 60, so it should be the player's choice.
+
+---
+
+## 8. Performance meter and lab (in the APK)
+
+`mobile/perf_lab.gd`, shown on phones.
+
+**The meter** sits in the top-right corner and shows:
+- fps, frame time and the worst frame;
+- **CPU** time split into scripts, physics × steps per frame and render submission;
+- **GPU** time;
+- which side is the **limit** (CPU, GPU, frame cap or screen);
+- draw calls, triangles, the 3D resolution, the screen refresh rate and the quality preset.
+
+**Tap the meter** to pause and open the lab. Each switch changes one cost, live:
+
+| Switch | Values | What it tells us |
+|---|---|---|
+| Frame-rate cap | Screen max / 120 / 90 / 72 / 60 / 48 / 30 | Even frame pacing: 72 and 48 divide 144 Hz evenly. Also less heat. |
+| 3D resolution | Game / 100% / 85% / 70% / 50% | If fps rises a lot at 50%, the GPU is fill-bound (pixels). If not, look at the CPU or vertices. |
+| Sun shadows | On / OFF (test) | Cost of the shadow passes (CPU draw calls and GPU vertices). |
+| Ink lines | On / OFF (test) | Cost of the full-screen ink pass, which reads the screen and depth. |
+| Colour grade | On / OFF (test) | Cost of the second full-screen pass. |
+| Copy report | n/a | Puts device, GPU, renderer, switches and the meter numbers on the clipboard. |
+
+The "test" switches change the look. They exist only to find the cost, and they reset on every launch. The real fix then targets that cost without changing the look, using the matching item in §2.
+
+The build also limits physics catch-up to 4 steps per frame on phones (A3).

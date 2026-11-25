@@ -10,11 +10,13 @@ extends Node
 ##     and enlarges the pause menu to finger size;
 ##   * maps the Android Back button onto the game's own flow: pause while driving, back out
 ##     of menus, resume from pause, and quit from the title hub;
-##   * pauses a drive and releases every held control when the app goes to the background.
+##   * pauses a drive and releases every held control when the app goes to the background;
+##   * shows a performance meter (tap it for the performance lab, perf_lab.gd).
 ## Upstream scripts are not modified. Everything here goes through the public Game API, the
 ## InputMap actions and ui_cancel, the same paths the keyboard and gamepad already use.
 
 const TouchControls := preload("res://mobile/touch_controls.gd")
+const PerfLab := preload("res://mobile/perf_lab.gd")
 const KeyHints := preload("res://scripts/ui/widgets/key_hints.gd")
 
 ## Tachometer scale on touch screens (the desktop gauge is 400 px).
@@ -24,6 +26,8 @@ const PAUSE_SCALE := 1.45
 
 var touch_enabled := false
 var controls: TouchControls
+## Performance meter + lab (perf_lab.gd). The meter is shown by default on phones only.
+var perf: PerfLab
 
 var _hud_done := false
 ## Keyboard hint strips ([W][A][S][D] Drive…): hidden on touch screens until a gamepad is used.
@@ -43,6 +47,10 @@ func _ready() -> void:
 	controls = TouchControls.new()
 	controls.name = "TouchControls"
 	add_child(controls)
+	perf = PerfLab.new()
+	perf.name = "PerfLab"
+	perf.setup(self, OS.has_feature("mobile") or args.has("--perf"))
+	add_child(perf)
 	get_tree().node_added.connect(_on_node_added)
 
 

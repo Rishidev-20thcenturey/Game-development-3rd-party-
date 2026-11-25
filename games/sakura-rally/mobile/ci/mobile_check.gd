@@ -150,6 +150,9 @@ func _run() -> void:
 	game.set_paused(false)
 	await _seconds(0.3)
 
+	# performance meter + lab
+	await _perf_lab_checks()
+
 	# manual gearbox shows the shift buttons
 	game.set_setting("transmission", "manual")
 	var ids: Array = controls._visible_buttons().map(func(b: Dictionary) -> String: return b["id"])
@@ -193,6 +196,55 @@ func _run() -> void:
 	await _seconds(3.0)
 	await shot("07_campaign")
 	_finish()
+
+
+func _perf_lab_checks() -> void:
+	var perf: Node = mobile.get("perf")
+	_check(perf != null, "performance lab created")
+	if perf == null:
+		return
+	_check(not bool(perf._meter.visible), "perf meter hidden by default off-phone (clean screenshots)")
+	perf.meter_on = true
+	await _seconds(1.5)
+	var st: Dictionary = perf.stats
+	_check(float(st.get("fps", 0.0)) > 0.0 and str(perf._meter.text).contains("fps") and str(perf._meter.text).contains("GPU"),
+			"perf meter shows fps, CPU and GPU time (%s)" % str(perf._meter.text).replace("\n", " | "))
+	_log("physics catch-up limit: %d steps per frame" % Engine.max_physics_steps_per_frame)
+	await _tap_control(perf._meter)
+	await _seconds(0.4)
+	_check(bool(game.paused) and bool(perf._panel.visible), "tapping the meter pauses and opens the lab")
+	var win := root
+	await _tap_control(perf._rows["scale"])
+	await _tap_control(perf._rows["scale"])
+	await _frames(3)
+	_check(is_equal_approx(win.scaling_3d_scale, 0.85), "lab: 3D resolution 85%% (scale %.2f)" % win.scaling_3d_scale)
+	await _tap_control(perf._rows["ink"])
+	await _tap_control(perf._rows["shadows"])
+	await _frames(3)
+	var quad: Node3D = main.post.ink_quad
+	var sun: DirectionalLight3D = main.map.atmosphere.sun
+	_check(not quad.visible, "lab: ink lines off")
+	_check(not sun.shadow_enabled, "lab: sun shadows off")
+	await _tap_control(perf._rows["cap"])
+	_check(Engine.max_fps == 120, "lab: frame-rate cap 120 (max_fps %d)" % Engine.max_fps)
+	await shot("08_perf_lab")
+	var rep: String = perf.copy_report()
+	_check(rep.contains("fps") and rep.contains("switches:"), "lab: report copied")
+	# restore everything
+	for i in 6:
+		perf._on_row("cap")
+	for i in 3:
+		perf._on_row("scale")
+	perf._on_row("ink")
+	perf._on_row("shadows")
+	await _frames(3)
+	_check(Engine.max_fps == 0 and quad.visible and sun.shadow_enabled and int(perf.scale_i) == 0,
+			"lab: switches restore the normal look (scale %.2f)" % win.scaling_3d_scale)
+	perf.lab_open = false
+	perf.meter_on = false
+	game.set_paused(false)
+	await _seconds(0.4)
+	_check(not bool(game.paused) and not bool(perf._panel.visible), "lab closed, drive resumed")
 
 
 func _left_menu() -> bool:

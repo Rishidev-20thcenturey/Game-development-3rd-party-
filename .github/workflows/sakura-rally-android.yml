@@ -316,6 +316,9 @@ jobs:
   emulator:
     name: Play-test in the Android emulator
     needs: apk
+    # Manual only for now: the first runs stopped right after reading the device info and did not
+    # reach the game, so a green tick here did not mean anything yet.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 50
     steps:
