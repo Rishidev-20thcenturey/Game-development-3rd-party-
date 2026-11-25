@@ -45,6 +45,10 @@ To install, open the APK on your phone and allow **Install unknown apps**. This 
 Menus work by tapping. Bluetooth or USB gamepads work too. The controls appear only while you're driving, and the speedometer moves to the bottom centre so your thumbs don't cover it.
 On first launch the game uses the **Low** quality preset and fullscreen. You can change both in Settings.
 
+## Performance on low-end phones
+
+Runs smoothly on a Snapdragon 8 Gen 1 tablet. The plan for mid-range and budget phones (same look, smoother frame rate) is in [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
+
 ## How it's built
 
 The upstream game is **not copied into this repo**. CI downloads the pinned upstream commit and adds this folder on top:
