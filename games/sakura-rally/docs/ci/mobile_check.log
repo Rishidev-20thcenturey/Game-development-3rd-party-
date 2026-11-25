@@ -1,30 +1,31 @@
 Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
 
-[   1.3s] CHECK ok   Mobile autoload in touch mode
-[   1.3s] CHECK ok   touch controls created
-[   4.7s] CHECK ok   touch controls hidden on the title hub
-[   4.7s] CHECK ok   Back on the title hub would quit (handler sees the hub)
-[  11.3s] CHECK ok   free roam reached
-[  11.3s] CHECK ok   touch controls shown while driving
-[  11.3s] CHECK ok   HUD tachometer moved to the bottom centre
-[  11.3s] CHECK ok   player car exists
-[  11.5s] CHECK ok   GAS touch presses throttle
-[  14.3s] CHECK ok   car accelerates under touch throttle (87 km/h)
-[  14.5s] CHECK ok   ▶ touch presses steer_right
-[  15.7s] CHECK ok   car turns while ▶ is held (yaw 28.5°)
-[  15.8s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
-[  16.0s] CHECK ok   sliding GAS → BRAKE swaps the pedals
-[  17.2s] CHECK ok   lifting every finger releases every action
-[  17.5s] CHECK ok   multi-touch: GAS + HANDBRAKE together
-[  17.5s] CHECK ok   camera button cycles chase -> chase_far
-[  18.0s] CHECK ok   pause button pauses
-[  18.0s] CHECK ok   touch controls hidden while paused
-[  18.5s] CHECK ok   Back on the pause menu resumes (resume)
-[  19.2s] CHECK ok   Back while driving pauses (pause)
-[  19.7s] CHECK ok   Back again resumes
-[  20.2s] CHECK ok   background: drive paused, controls released
-[  20.5s] CHECK ok   manual gearbox shows ▲ ▼
-[  22.9s] CHECK ok   ▲ shifts up (gear 1 -> 2)
-[  35.0s] CHECK ok   time trial racing with touch controls
-[  37.7s] CHECK ok   controls hidden again on the menu
-[  37.7s] SUMMARY: 0 failures
+[   2.1s] CHECK ok   Mobile autoload in touch mode
+[   2.1s] CHECK ok   touch controls created
+[   6.0s] CHECK ok   touch controls hidden on the title hub
+[   6.0s] CHECK ok   Back on the title hub would quit (handler sees the hub)
+[   6.0s] CHECK ok   keyboard hint strip hidden on touch screens
+[  12.6s] CHECK ok   free roam reached
+[  12.6s] CHECK ok   touch controls shown while driving
+[  12.6s] CHECK ok   HUD tachometer moved to the bottom centre
+[  12.6s] CHECK ok   player car exists
+[  12.8s] CHECK ok   GAS touch presses throttle
+[  15.6s] CHECK ok   car accelerates under touch throttle (87 km/h)
+[  15.7s] CHECK ok   ▶ touch presses steer_right
+[  16.9s] CHECK ok   car turns while ▶ is held (yaw 27.7°)
+[  17.1s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
+[  17.2s] CHECK ok   sliding GAS → BRAKE swaps the pedals
+[  18.4s] CHECK ok   lifting every finger releases every action
+[  18.7s] CHECK ok   multi-touch: GAS + HANDBRAKE together
+[  18.7s] CHECK ok   camera button cycles chase -> chase_far
+[  19.2s] CHECK ok   pause button pauses
+[  19.2s] CHECK ok   touch controls hidden while paused
+[  19.7s] CHECK ok   Back on the pause menu resumes (resume)
+[  20.5s] CHECK ok   Back while driving pauses (pause)
+[  21.0s] CHECK ok   Back again resumes
+[  21.5s] CHECK ok   background: drive paused, controls released
+[  21.8s] CHECK ok   manual gearbox shows ▲ ▼
+[  24.1s] CHECK ok   ▲ shifts up (gear 1 -> 2)
+[  36.2s] CHECK ok   time trial racing with touch controls
+[  38.9s] CHECK ok   controls hidden again on the menu
+[  38.9s] SUMMARY: 0 failures
