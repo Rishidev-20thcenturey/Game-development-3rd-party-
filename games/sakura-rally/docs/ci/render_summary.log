@@ -1,43 +1,43 @@
 [   3.1s] CHECK ok   Mobile autoload in touch mode
 [   3.1s] CHECK ok   touch controls created
-[ 153.7s] CHECK ok   touch controls hidden on the title hub
-[ 153.7s] CHECK ok   Back on the title hub would quit (handler sees the hub)
-[ 153.7s] CHECK ok   keyboard hint strip hidden on touch screens
-[ 155.2s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/01_title.png
-[ 196.7s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
-[ 198.1s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/01b_time_attack.png
-[ 233.9s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
-[ 323.9s] TIMEOUT (state=INTRO)
-[ 361.5s] CHECK ok   free roam reached
-[ 361.5s] CHECK ok   touch controls shown while driving
-[ 361.5s] CHECK ok   HUD tachometer moved to the bottom centre
-[ 361.5s] CHECK ok   player car exists
-[ 367.6s] CHECK ok   GAS touch presses throttle
-[ 439.4s] CHECK ok   car accelerates under touch throttle (88 km/h)
-[ 443.9s] CHECK ok   ▶ touch presses steer_right
-[ 447.2s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/02_drive_touch.png
-[ 475.0s] CHECK ok   car turns while ▶ is held (yaw 32.7°)
-[ 478.7s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
-[ 482.1s] CHECK ok   sliding GAS → BRAKE swaps the pedals
-[ 505.6s] CHECK ok   lifting every finger releases every action
-[ 512.2s] CHECK ok   multi-touch: GAS + HANDBRAKE together
-[ 516.1s] CHECK ok   camera button cycles chase -> chase_far
-[ 528.9s] CHECK ok   pause button pauses
-[ 528.9s] CHECK ok   touch controls hidden while paused
-[ 530.2s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/03_pause.png
-[ 540.6s] CHECK ok   Back on the pause menu resumes (resume)
-[ 556.6s] CHECK ok   Back while driving pauses (pause)
-[ 567.8s] CHECK ok   Back again resumes
-[ 579.4s] CHECK ok   background: drive paused, controls released
-[ 586.5s] CHECK ok   manual gearbox shows ▲ ▼
-[ 633.1s] CHECK ok   ▲ shifts up (gear 1 -> 2)
-[ 634.3s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/04_manual.png
-[ 725.1s] TIMEOUT (state=INTRO)
-[ 742.1s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/05_countdown.png
-[ 772.6s] TIMEOUT (state=COUNTDOWN)
-[ 880.9s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/06_stage.png
-[ 880.9s] CHECK ok   time trial racing with touch controls
-[ 957.2s] CHECK ok   controls hidden again on the menu
-[1033.6s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
-[1095.8s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/07_campaign.png
-[1095.8s] SUMMARY: 0 failures
+[ 154.0s] CHECK ok   touch controls hidden on the title hub
+[ 154.0s] CHECK ok   Back on the title hub would quit (handler sees the hub)
+[ 154.0s] CHECK ok   keyboard hint strip hidden on touch screens
+[ 155.6s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/01_title.png
+[ 204.8s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
+[ 206.4s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/01b_time_attack.png
+[ 249.7s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
+[ 340.0s] TIMEOUT (state=INTRO)
+[ 386.5s] CHECK FAIL free roam reached
+[ 386.5s] CHECK FAIL touch controls shown while driving
+[ 386.5s] CHECK ok   HUD tachometer moved to the bottom centre
+[ 386.5s] CHECK ok   player car exists
+[ 393.7s] CHECK FAIL GAS touch presses throttle
+[ 482.2s] CHECK FAIL car accelerates under touch throttle (-0 km/h)
+[ 487.5s] CHECK ok   ▶ touch presses steer_right
+[ 489.1s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/02_drive_touch.png
+[ 525.9s] CHECK FAIL car turns while ▶ is held (yaw -0.0°)
+[ 531.2s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
+[ 536.4s] CHECK FAIL sliding GAS → BRAKE swaps the pedals
+[ 574.2s] CHECK ok   lifting every finger releases every action
+[ 584.7s] CHECK ok   multi-touch: GAS + HANDBRAKE together
+[ 591.0s] CHECK ok   camera button cycles chase -> chase_far
+[ 611.4s] CHECK ok   pause button pauses
+[ 611.4s] CHECK ok   touch controls hidden while paused
+[ 613.1s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/03_pause.png
+[ 629.7s] CHECK ok   Back on the pause menu resumes (resume)
+[ 655.5s] CHECK ok   Back while driving pauses (pause)
+[ 673.2s] CHECK ok   Back again resumes
+[ 691.8s] CHECK ok   background: drive paused, controls released
+[ 703.1s] CHECK ok   manual gearbox shows ▲ ▼
+[ 778.8s] CHECK ok   ▲ shifts up (gear 1 -> 2)
+[ 780.3s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/04_manual.png
+[ 870.9s] TIMEOUT (state=INTRO)
+[ 884.8s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/05_countdown.png
+[ 915.5s] TIMEOUT (state=INTRO)
+[1045.4s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/06_stage.png
+[1045.4s] CHECK ok   time trial racing with touch controls
+[1139.3s] CHECK ok   controls hidden again on the menu
+[1229.4s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
+[1302.4s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/07_campaign.png
+[1302.4s] SUMMARY: 6 failures

@@ -1,36 +1,36 @@
 Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
 
-[   2.2s] CHECK ok   Mobile autoload in touch mode
-[   2.2s] CHECK ok   touch controls created
-[   6.1s] CHECK ok   touch controls hidden on the title hub
-[   6.1s] CHECK ok   Back on the title hub would quit (handler sees the hub)
-[   6.1s] CHECK ok   keyboard hint strip hidden on touch screens
-[   6.1s] TAP @Button@252 at (9.104042, 54.35236)
-[   7.6s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
-[   9.1s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
-[  15.7s] CHECK ok   free roam reached
-[  15.7s] CHECK ok   touch controls shown while driving
-[  15.7s] CHECK ok   HUD tachometer moved to the bottom centre
-[  15.7s] CHECK ok   player car exists
-[  15.9s] CHECK ok   GAS touch presses throttle
-[  18.7s] CHECK ok   car accelerates under touch throttle (87 km/h)
-[  18.9s] CHECK ok   ▶ touch presses steer_right
-[  20.1s] CHECK ok   car turns while ▶ is held (yaw 28.9°)
-[  20.2s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
-[  20.4s] CHECK ok   sliding GAS → BRAKE swaps the pedals
-[  21.5s] CHECK ok   lifting every finger releases every action
-[  21.8s] CHECK ok   multi-touch: GAS + HANDBRAKE together
-[  21.9s] CHECK ok   camera button cycles chase -> chase_far
-[  22.4s] CHECK ok   pause button pauses
-[  22.4s] CHECK ok   touch controls hidden while paused
-[  22.9s] CHECK ok   Back on the pause menu resumes (resume)
-[  23.6s] CHECK ok   Back while driving pauses (pause)
-[  24.1s] CHECK ok   Back again resumes
-[  24.6s] CHECK ok   background: drive paused, controls released
-[  24.9s] CHECK ok   manual gearbox shows ▲ ▼
-[  27.3s] CHECK ok   ▲ shifts up (gear 1 -> 2)
-[  39.4s] CHECK ok   time trial racing with touch controls
-[  42.1s] CHECK ok   controls hidden again on the menu
-[  43.1s] TAP @Button@238 at (10.40888, 50.69299)
-[  44.8s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
-[  47.8s] SUMMARY: 0 failures
+[   2.4s] CHECK ok   Mobile autoload in touch mode
+[   2.4s] CHECK ok   touch controls created
+[   6.3s] CHECK ok   touch controls hidden on the title hub
+[   6.3s] CHECK ok   Back on the title hub would quit (handler sees the hub)
+[   6.3s] CHECK ok   keyboard hint strip hidden on touch screens
+[   6.3s] TAP @Button@252 at (9.140512, 54.31586)
+[   7.8s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
+[   9.3s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
+[  15.9s] CHECK ok   free roam reached
+[  15.9s] CHECK ok   touch controls shown while driving
+[  15.9s] CHECK ok   HUD tachometer moved to the bottom centre
+[  15.9s] CHECK ok   player car exists
+[  16.1s] CHECK ok   GAS touch presses throttle
+[  18.9s] CHECK ok   car accelerates under touch throttle (88 km/h)
+[  19.1s] CHECK ok   ▶ touch presses steer_right
+[  20.3s] CHECK ok   car turns while ▶ is held (yaw 29.8°)
+[  20.5s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
+[  20.6s] CHECK ok   sliding GAS → BRAKE swaps the pedals
+[  21.8s] CHECK ok   lifting every finger releases every action
+[  22.1s] CHECK ok   multi-touch: GAS + HANDBRAKE together
+[  22.1s] CHECK ok   camera button cycles chase -> chase_far
+[  22.6s] CHECK ok   pause button pauses
+[  22.6s] CHECK ok   touch controls hidden while paused
+[  23.1s] CHECK ok   Back on the pause menu resumes (resume)
+[  23.8s] CHECK ok   Back while driving pauses (pause)
+[  24.4s] CHECK ok   Back again resumes
+[  24.9s] CHECK ok   background: drive paused, controls released
+[  25.2s] CHECK ok   manual gearbox shows ▲ ▼
+[  27.5s] CHECK ok   ▲ shifts up (gear 1 -> 2)
+[  39.6s] CHECK ok   time trial racing with touch controls
+[  42.3s] CHECK ok   controls hidden again on the menu
+[  43.3s] TAP @Button@238 at (10.41515, 50.71864)
+[  45.0s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
+[  48.0s] SUMMARY: 0 failures
