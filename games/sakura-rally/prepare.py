@@ -99,7 +99,12 @@ def main() -> int:
     presets = (HERE / "android" / "export_presets.cfg").read_text()
     for k in ("VERSION_NAME", "VERSION_CODE", "PACKAGE"):
         presets = presets.replace(f"@{k}@", env[k])
-    (proj / "export_presets.cfg").write_text(presets)
+    # preset.1: the same app for x86_64, used only by CI to run the APK in the Android emulator.
+    test = (presets.replace("[preset.0]", "[preset.1]").replace("[preset.0.options]", "[preset.1.options]")
+            .replace('name="Android"', 'name="Android x86_64 (emulator test)"')
+            .replace("architectures/arm64-v8a=true", "architectures/arm64-v8a=false")
+            .replace("architectures/x86_64=false", "architectures/x86_64=true"))
+    (proj / "export_presets.cfg").write_text(presets.rstrip() + "\n\n" + test)
     print(f"wrote export_presets.cfg ({env['PACKAGE']} {env['VERSION_NAME']} / {env['VERSION_CODE']})")
 
     for name in ("LICENSE", "THIRD_PARTY_NOTICES.md"):

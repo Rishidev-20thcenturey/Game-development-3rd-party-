@@ -195,6 +195,22 @@ jobs:
           test -s "$APK" || { echo "::error::export produced no APK"; exit 1; }
           echo "APK=$APK" >> "$GITHUB_ENV"
 
+      - name: Export x86_64 test APK (emulator only, not published)
+        continue-on-error: true
+        run: |
+          mkdir -p "$OUT/emu"
+          timeout 1200 godot --headless --path "$PROJ" --export-release "Android x86_64 (emulator test)" \
+            "$OUT/emu/SakuraRally-x86_64-test.apk" 2>&1 | tail -n 15
+          ls -la "$OUT/emu"
+
+      - name: Upload emulator test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: sakura-rally-emulator-apk
+          path: out/emu/SakuraRally-x86_64-test.apk
+          if-no-files-found: warn
+          retention-days: 3
+
       - name: Verify APK
         run: |
           set -euo pipefail
@@ -284,3 +300,69 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "Sakura Rally: CI previews + build info [skip ci]"
           for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 5; done
+
+  emulator:
+    name: Play-test in the Android emulator
+    needs: apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: sakura-rally-emulator-apk
+          path: emu
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run the APK and tap through the title hub
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disk-size: 6000M
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -camera-back none
+          disable-animations: true
+          script: bash games/sakura-rally/ci/emulator_test.sh emu/SakuraRally-x86_64-test.apk emu-out
+
+      - name: Report
+        if: always()
+        run: |
+          [ -f emu-out/steps.txt ] && sed 's/^/::notice title=emulator::/' emu-out/steps.txt | head -n 40 || echo "::warning title=emulator::no steps.txt"
+
+      - name: Commit emulator results
+        if: always() && github.event_name == 'push'
+        run: |
+          set -eu
+          D=games/sakura-rally/docs/ci/emulator
+          rm -rf "$D" && mkdir -p "$D"
+          python3 -m pip install -q --user pillow || true
+          python3 - emu-out "$D" <<'PY'
+          import sys, pathlib
+          from PIL import Image
+          src, dst = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+          for f in sorted(src.glob("*.png")):
+              try:
+                  im = Image.open(f).convert("RGB")
+                  im.thumbnail((1600, 1600))
+                  im.save(dst / (f.stem + ".jpg"), quality=80)
+              except Exception as e:
+                  print("skip", f, e)
+          PY
+          cp emu-out/steps.txt "$D/" 2>/dev/null || true
+          cp emu-out/logcat_filtered.txt "$D/" 2>/dev/null || true
+          head -c 400000 emu-out/logcat_full.txt > "$D/logcat_head.txt" 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$D"
+          git diff --cached --quiet && exit 0
+          git commit -m "Sakura Rally: emulator play-test results [skip ci]"
+          for i in 1 2 3 4; do git pull --rebase -q && git push && break; sleep 7; done

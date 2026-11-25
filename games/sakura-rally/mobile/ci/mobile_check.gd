@@ -47,6 +47,16 @@ func _run() -> void:
 	_check(mobile.hints_hidden(), "keyboard hint strip hidden on touch screens")
 	await shot("01_title")
 
+	# ------------------------------------------------------------ title hub, driven by taps
+	var title: Node = main.ui.title
+	await _tap_control(title._time_attack_item)
+	await _seconds(1.5)
+	_check(str(title.view) == "time_attack", "tapping Time Attack opens its page (view=%s)" % title.view)
+	await shot("01b_time_attack")
+	var rb: String = mobile.handle_back()
+	await _seconds(1.5)
+	_check(str(title.view) == "title", "Back from Time Attack returns to the hub (%s, view=%s)" % [rb, title.view])
+
 	# ------------------------------------------------------------ free roam, driven by touch
 	game.request_start(opts["map"], game.MODE_FREE_ROAM)
 	await _until(func() -> bool: return int(game.state) == int(game.State.FREE_ROAM), 90.0)
@@ -173,7 +183,21 @@ func _run() -> void:
 	await _until(func() -> bool: return int(game.state) == int(game.State.MENU), 60.0)
 	await _seconds(1.0)
 	_check(not bool(controls.active), "controls hidden again on the menu")
+
+	# ------------------------------------------------------------ campaign started by a tap
+	await _until(func() -> bool: return not bool(main.ui.title._switching), 20.0)
+	await _seconds(1.0)
+	await _tap_control(main.ui.title._campaign_item)
+	await _until(_left_menu, 90.0)
+	_check(_left_menu(), "tapping New journey starts the campaign (state=%s)" % (game.State as Dictionary).find_key(game.state))
+	await _seconds(3.0)
+	await shot("07_campaign")
 	_finish()
+
+
+func _left_menu() -> bool:
+	var s := int(game.state)
+	return s != int(game.State.MENU) and s != int(game.State.BOOT) and s != int(game.State.LOADING)
 
 
 func _on_grid() -> bool:
@@ -202,6 +226,28 @@ func _touch(index: int, id: String, pressed: bool) -> void:
 	ev.pressed = pressed
 	ev.position = _to_window(controls.button_center(id))
 	Input.parse_input_event(ev)
+
+
+## A finger tap on a Control (press, two frames, release) through the OS touch path. Godot turns
+## it into the emulated mouse click that Buttons react to, exactly as on Android.
+func _tap_control(c: Control) -> void:
+	if c == null:
+		_check(false, "tap target exists")
+		return
+	var p := _to_window(c.get_global_rect().get_center())
+	_log("TAP %s at %s" % [c.name, p])
+	var ev := InputEventScreenTouch.new()
+	ev.index = 9
+	ev.pressed = true
+	ev.position = p
+	Input.parse_input_event(ev)
+	await _frames(3)
+	var up := InputEventScreenTouch.new()
+	up.index = 9
+	up.pressed = false
+	up.position = p
+	Input.parse_input_event(up)
+	await _frames(2)
 
 
 func _drag(index: int, id: String) -> void:
