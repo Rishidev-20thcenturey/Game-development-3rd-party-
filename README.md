@@ -3,11 +3,19 @@
 Ready-to-publish Android builds of **third-party MIT-licensed games**, picked from the
 [awesome-opus-5.5-games](https://github.com/Rishidev-20thcenturey/awesome-opus-5.5-games) catalogue.
 
+## ⬇️ Download
+
+**[Download Turbo Kart Rally — APK v1.0.0](https://github.com/Rishidev-20thcenturey/Game-development-3rd-party-/raw/main/downloads/TurboKartRally-v1.0.0.apk)** (0.6 MB, Android 7.0+)
+
+SHA-256: `6e2efad7782888e3458f4d959cb021d4f544af05dbafed0a93518a0c2d521d73`
+
+On your phone, open the downloaded file and allow **Install unknown apps** when Android asks.
+
 ## Games
 
 | Game | Download | Source | License |
 | --- | --- | --- | --- |
-| 🏁 **[Turbo Kart Rally](games/turbo-kart-rally/)**: arcade 3D kart racer, 8 racers, 8 items, AI rivals, touch controls, fully offline | [**APK v1.0.0** (0.6 MB)](downloads/TurboKartRally-v1.0.0.apk) | [bridge-mind/turbo-kart-rally](https://github.com/bridge-mind/turbo-kart-rally) | MIT |
+| 🏁 **[Turbo Kart Rally](games/turbo-kart-rally/)**: arcade 3D kart racer, 8 racers, 8 items, AI rivals, touch controls, fully offline | [**APK v1.0.0** (0.6 MB)](https://github.com/Rishidev-20thcenturey/Game-development-3rd-party-/raw/main/downloads/TurboKartRally-v1.0.0.apk) | [bridge-mind/turbo-kart-rally](https://github.com/bridge-mind/turbo-kart-rally) | MIT |
 
 <p align="center"><img src="games/turbo-kart-rally/docs/mobile-race.jpg" alt="Turbo Kart Rally on a phone" width="70%"></p>
 

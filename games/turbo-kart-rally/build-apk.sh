@@ -100,7 +100,7 @@ rm -f "$APK.idsig"
 log "verifying"
 "$JAVA" -jar "$TC/apksigner.jar" verify --min-sdk-version "$MIN_SDK" --verbose "$APK" | head -8
 python3 "$REPO_ROOT/tools/android/zipalign.py" --check "$APK" && log "alignment OK"
-"$TC/aapt2" dump badging "$APK" | head -3
+"$TC/aapt2" dump badging "$APK" | sed -n 1,3p
 
 ( cd "$OUT_DIR" && sha256sum "$(basename "$APK")" > "$(basename "$APK").sha256" )
 log "done: $APK ($(du -h "$APK" | cut -f1))"

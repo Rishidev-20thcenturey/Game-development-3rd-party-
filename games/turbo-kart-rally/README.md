@@ -10,7 +10,7 @@ Upstream game: [bridge-mind/turbo-kart-rally](https://github.com/bridge-mind/tur
 
 ## ⬇️ Download
 
-**[`downloads/TurboKartRally-v1.0.0.apk`](../../downloads/TurboKartRally-v1.0.0.apk)** (about 0.6 MB). The SHA-256 is in the `.sha256` file next to it.
+**[TurboKartRally-v1.0.0.apk](https://github.com/Rishidev-20thcenturey/Game-development-3rd-party-/raw/main/downloads/TurboKartRally-v1.0.0.apk)** (about 0.6 MB). The SHA-256 is in the `.sha256` file next to it.
 
 | | |
 | --- | --- |
