@@ -1,0 +1,164 @@
+/* ==========================================================================================
+   Mobile / touch layer for the Android build of Turbo Kart Rally.
+   Everything here is scoped to `html.touch` (set by platform.js) so desktop is unchanged.
+   ========================================================================================== */
+
+html.touch, html.touch body {
+  touch-action: none; overscroll-behavior: none;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---- touch controls overlay ------------------------------------------------------------- */
+#touch-ui { display: none; }
+html.touch #touch-ui {
+  display: block; position: absolute; inset: 0; z-index: 5; pointer-events: none;
+  font-family: var(--display); color: #fff;
+  --pad-l: max(14px, env(safe-area-inset-left));
+  --pad-r: max(14px, env(safe-area-inset-right));
+  --pad-b: max(12px, env(safe-area-inset-bottom));
+}
+#touch-ui > * { pointer-events: auto; }
+#touch-ui button { font: inherit; color: inherit; border: 0; padding: 0; background: none; touch-action: none; }
+
+/* hide everything by default; show per state */
+#touch-ui .tc-steer, #touch-ui .tc-cluster, #touch-ui .tc-top, #touch-ui .tc-sound, #touch-ui .tc-hint { display: none; }
+#touch-ui[data-state="countdown"] .tc-steer, #touch-ui[data-state="racing"] .tc-steer,
+#touch-ui[data-state="countdown"] .tc-cluster, #touch-ui[data-state="racing"] .tc-cluster { display: block; }
+#touch-ui[data-state="countdown"] .tc-top, #touch-ui[data-state="racing"] .tc-top, #touch-ui[data-state="intro"] .tc-top { display: flex; }
+#touch-ui[data-state="intro"] .tc-auto, #touch-ui[data-state="intro"] .tc-look { display: none; }
+#touch-ui[data-state="title"] .tc-sound, #touch-ui[data-state="paused"] .tc-sound { display: flex; }
+#touch-ui[data-state="intro"] .tc-hint { display: block; pointer-events: none; }
+
+/* steering pad */
+.tc-steer {
+  position: absolute; left: var(--pad-l); bottom: var(--pad-b);
+  width: clamp(190px, 30vw, 270px); height: clamp(96px, 30vh, 130px);
+}
+.tc-steer-btn {
+  position: absolute; top: 0; bottom: 0; width: 47%;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 999px; background: rgba(10, 14, 50, 0.38); border: 3px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3), inset 0 0 0 2px rgba(0, 0, 0, 0.15);
+  font-size: clamp(30px, 9vh, 44px); text-shadow: 0 3px 0 rgba(20, 22, 60, 0.8);
+  transition: transform 0.06s, background 0.06s;
+}
+.tc-steer-btn.l { left: 0; }
+.tc-steer-btn.r { right: 0; }
+.tc-steer-btn.down { background: rgba(255, 210, 63, 0.55); border-color: #fff; transform: scale(0.94); }
+
+/* right-hand cluster */
+.tc-cluster { position: absolute; right: var(--pad-r); bottom: var(--pad-b); width: clamp(220px, 32vw, 290px); height: clamp(170px, 52vh, 230px); }
+.tc-btn {
+  position: absolute; border-radius: 50%;
+  display: flex !important; align-items: center; justify-content: center;
+  border: 3px solid rgba(255, 255, 255, 0.75) !important;
+  box-shadow: 0 6px 0 rgba(10, 12, 40, 0.55), 0 10px 18px rgba(0, 0, 0, 0.35);
+  font-size: clamp(13px, 3.6vh, 17px); letter-spacing: 1px; text-shadow: 0 2px 0 rgba(20, 22, 60, 0.85);
+  transition: transform 0.06s, filter 0.06s, box-shadow 0.06s;
+}
+.tc-btn.down { transform: translateY(4px) scale(0.95); box-shadow: 0 2px 0 rgba(10, 12, 40, 0.55); filter: brightness(1.25); }
+.tc-gas   { right: 0; bottom: 0; width: 34%; aspect-ratio: 1; background: radial-gradient(circle at 40% 30%, #8dff8a, #22b04a 70%) !important; }
+.tc-drift { right: 37%; bottom: 0; width: 34%; aspect-ratio: 1; background: radial-gradient(circle at 40% 30%, #ffe27a, #ff8a1f 70%) !important; }
+.tc-item  { right: 4%; bottom: 46%; width: 27%; aspect-ratio: 1; background: radial-gradient(circle at 40% 30%, #9fd2ff, #2f6fe0 70%) !important; }
+.tc-brake { right: 41%; bottom: 46%; width: 24%; aspect-ratio: 1; background: radial-gradient(circle at 40% 30%, #ff9a9a, #d8323c 70%) !important; font-size: clamp(11px, 3vh, 14px); }
+/* with auto-gas the GAS button is still there (rocket start / manual), just quieter */
+#touch-ui.autogas .tc-gas { opacity: 0.55; }
+
+/* top bar: auto-gas toggle, look back, pause */
+.tc-top { position: absolute; top: max(10px, env(safe-area-inset-top)); right: var(--pad-r); gap: 8px; align-items: center; }
+.tc-round, .tc-pill {
+  height: 42px; display: flex; align-items: center; justify-content: center;
+  border-radius: 21px; background: rgba(10, 14, 50, 0.55) !important; border: 2px solid rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+.tc-round { width: 42px; font-size: 16px; }
+.tc-pause { font-size: 14px; letter-spacing: -2px; }
+.tc-round svg { display: block; }
+.tc-pill { padding: 0 12px !important; font-size: 12px; letter-spacing: 1px; font-family: var(--body); font-weight: 900; opacity: 0.85; }
+.tc-pill.on { background: rgba(34, 176, 74, 0.7) !important; }
+.tc-look.down { background: rgba(255, 210, 63, 0.6) !important; }
+.tc-sound { position: absolute; top: max(10px, env(safe-area-inset-top)); right: var(--pad-r); font-size: 18px; z-index: 6; }
+.tc-hint {
+  position: absolute; left: 50%; bottom: 14%; transform: translateX(-50%);
+  font-size: 20px; letter-spacing: 2px; text-shadow: var(--outline); animation: blink 1.2s ease-in-out infinite;
+}
+
+/* ---- in-race HUD rearranged around the thumbs ---------------------------------------------- */
+html.touch .hud-standings { display: none; }
+html.touch .hud-tl { top: max(10px, env(safe-area-inset-top)); left: var(--safe-l, max(14px, env(safe-area-inset-left))); }
+html.touch .hud-lap .lbl { font-size: 18px; }
+html.touch .hud-lap .val { font-size: 40px; }
+html.touch .hud-lap .of { font-size: 24px; }
+html.touch .hud-timer { font-size: 18px; }
+html.touch .hud-splits { display: none; }
+html.touch .hud-item { top: max(8px, env(safe-area-inset-top)); }
+html.touch .item-slot { width: 70px; height: 70px; border-radius: 18px; }
+html.touch .item-img { width: 52px; height: 52px; }
+html.touch .item-hint { display: none; }
+/* minimap: small, left edge between the lap counter and the steering pad */
+html.touch .hud-minimap {
+  left: max(10px, env(safe-area-inset-left)); bottom: auto; top: clamp(84px, 24vh, 110px);
+  width: clamp(84px, 24vh, 120px); height: clamp(84px, 24vh, 120px); opacity: 0.9;
+}
+/* speedometer + position: bottom centre, between the two thumbs */
+html.touch .hud-br { right: auto; left: 50%; bottom: 2px; transform: translateX(-50%) scale(0.72); transform-origin: 50% 100%; }
+
+/* ---- title -------------------------------------------------------------------------------- */
+html.touch .press-start { font-size: 0; }
+html.touch .press-start::after { content: 'TAP TO START'; font-size: clamp(22px, 6vh, 34px); }
+html.touch .title-foot .kc, html.touch .title-foot span:first-child { margin-right: 0; }
+html.touch .title-foot { font-size: 0; }
+html.touch .title-foot span:first-child { font-size: 12px; }
+html.touch .title-foot .kc { display: none; }
+
+/* ---- character select: compact landscape layout for phones ---------------------------------- */
+html.touch .sel-back { font-size: 0; }
+html.touch .sel-back::after { content: '◀ BACK'; font-size: 16px; }
+html.touch .controls-help { display: none; }
+@media (max-height: 520px) {
+  html.touch .select-screen {
+    padding: max(8px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 8px max(14px, env(safe-area-inset-left));
+    overflow: hidden; background: rgba(12, 14, 44, 0.72);
+  }
+  html.touch .sel-title { font-size: 24px; }
+  html.touch .sel-back { padding: 6px 12px; }
+  html.touch .sel-body { flex-direction: row; gap: 12px; margin-top: 8px; }
+  html.touch .sel-grid {
+    width: auto; flex: 1 1 58%; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr);
+    gap: 8px; align-content: stretch;
+  }
+  html.touch .card { grid-template-columns: 1fr; grid-template-rows: auto auto; text-align: center; padding: 6px 4px; align-content: center; }
+  html.touch .card-portrait { grid-row: auto; margin: 0 auto 2px; width: clamp(36px, 13vh, 56px); height: clamp(36px, 13vh, 56px); border-radius: 12px; }
+  html.touch .card-name { font-size: 16px; }
+  html.touch .card-stats { display: none; }
+  html.touch .sel-side { width: auto; flex: 1 1 42%; max-width: 340px; flex-direction: column; flex-wrap: nowrap; gap: 6px; min-height: 0; }
+  html.touch .preview { flex: 1 1 auto; min-height: 0; padding: 6px 10px; flex-direction: row; gap: 10px; border-radius: 16px; }
+  html.touch .pv-portrait { width: clamp(44px, 15vh, 70px); height: clamp(44px, 15vh, 70px); flex: none; border-width: 3px; box-shadow: 0 0 0 3px var(--kc, #888); }
+  html.touch .pv-name { font-size: 22px; text-align: left; }
+  html.touch .pv-kart { justify-content: flex-start; margin: 2px 0 2px; font-size: 10px; }
+  html.touch .st.big { font-size: 10px; margin: 1px 0; }
+  html.touch .st.big .bar i { width: 14px; height: 8px; }
+  html.touch .opts { flex: none; gap: 6px; }
+  html.touch .opt { padding: 4px 8px; grid-template-columns: 52px 30px 1fr 30px; border-radius: 12px; }
+  html.touch .opt-lbl { font-size: 13px; }
+  html.touch .opt-val { font-size: 16px; }
+  html.touch .opt-arrow { font-size: 20px; padding: 4px 0; }
+  html.touch .race-btn { font-size: 24px; padding: 6px; margin-top: 0; }
+}
+
+/* ---- pause + results fit short screens -------------------------------------------------------- */
+@media (max-height: 520px) {
+  html.touch .pause-panel { padding: 14px 24px; gap: 8px; }
+  html.touch .pause-title { font-size: 38px; }
+  html.touch .pause-panel .btn { width: 240px; padding: 8px 14px; font-size: 20px; }
+  html.touch .res-panel { padding: 10px 16px; max-height: 96vh; }
+  html.touch .res-title { font-size: 34px; }
+  html.touch .res-row { padding: 1px 10px 1px 6px; }
+  html.touch .res-place { font-size: 22px; -webkit-text-stroke: 4px var(--ink); }
+  html.touch .res-portrait { width: 28px; height: 28px; border-width: 2px; }
+  html.touch .res-name { font-size: 16px; }
+  html.touch .res-time { font-size: 16px; }
+  html.touch .res-buttons { margin-top: 6px; }
+  html.touch .res-buttons .btn { padding: 8px 16px; font-size: 18px; }
+}
