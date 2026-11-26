@@ -41,6 +41,26 @@ const PROFILE_STEPS := [
 	["world", "Whole 3D world off"],
 ]
 const PROFILE_SETTLE := 0.8
+
+## Automatic 3D resolution (phones): when the GPU can't hold DRS_TARGET_FPS the 3D resolution
+## steps down (FSR upscales it), when there is headroom it steps back up to the preset's own
+## resolution. Each preset keeps its features (shadows, glow, AA, view distance); only the 3D
+## sharpness flexes, and never below DRS_FLOOR x Low's resolution.
+const DRS_TARGET_FPS := 60.0
+const DRS_HEADROOM := 0.9 ## aim the GPU at 90% of the frame budget
+const DRS_GROW_BELOW := 0.7 ## grow when the GPU uses less than 70% of that
+const DRS_INTERVAL := 1.5 ## seconds between changes (each change reallocates render buffers)
+const DRS_MIN_STEP := 0.03
+const DRS_FLOOR := 0.85
+## High on phones: 2x MSAA instead of 4x, a 4096 shadow atlas instead of 8192, and the nearest
+## cascade tightened (split 0.1 -> 0.065) so shadows near the car keep almost the same texel
+## density. Godot's default first split is 0.1.
+const HIGH_SHADOW_ATLAS := 4096
+const HIGH_SPLIT_1 := 0.065
+const DEFAULT_SPLIT_1 := 0.1
+## Added to the preset's shadow distance after tuning; Quality.apply() writing the exact preset
+## value again means it re-ran (map load, settings change) and the tuning must be re-applied.
+const TUNED_MARK := 0.05
 const PROFILE_MEASURE := 1.7
 ## Process order: the stamp runs before every other node's _process, the lab after all of them,
 ## so the time between the two is the game's own script work for the frame (Godot's
@@ -84,6 +104,15 @@ var profile_time_scale := 1.0
 var _profile_btn: Button
 var _results: Label
 var _outline_cache := {} ## Material -> its outline next_pass, while the outline step runs
+## Phone tuning and automatic resolution (on by default on phones; CI turns them on to test).
+var tuning_enabled := OS.has_feature("mobile")
+var drs_enabled := OS.has_feature("mobile")
+var drs_scale := 0.0 ## 0 = follow the preset
+var _drs_t := 0.0
+var _drs_gpu := 0.0
+var _drs_n := 0
+var _drs_quality := ""
+var tuned_count := 0
 
 
 func setup(mobile: Node, meter_default: bool) -> void:
@@ -213,7 +242,7 @@ func _refresh_rows() -> void:
 	var cap: int = CAPS[cap_i]
 	_rows["cap"].text = "Frame-rate cap:  %s" % ("Screen max" if cap == 0 else "%d fps" % cap)
 	var s: float = SCALES[scale_i]
-	_rows["scale"].text = "3D resolution:  %s" % ("Game setting" if s == 0.0 else "%d%%" % roundi(s * 100.0))
+	_rows["scale"].text = "3D resolution:  %s" % (("Auto" if drs_enabled else "Game setting") if s == 0.0 else "%d%%" % roundi(s * 100.0))
 	_rows["shadows"].text = "Sun shadows:  %s" % ("On" if shadows_on else "OFF (test)")
 	_rows["ink"].text = "Ink lines:  %s" % ("On" if ink_on else "OFF (test)")
 	_rows["grade"].text = "Colour grade:  %s" % ("On" if grade_on else "OFF (test)")
@@ -283,6 +312,8 @@ func _restore_game_scale() -> void:
 func _enforce() -> void:
 	var win := get_window()
 	var s: float = _profile_scale if _profile_scale > 0.0 else SCALES[scale_i]
+	if s == 0.0 and drs_active():
+		s = drs_scale
 	if s > 0.0 and not is_equal_approx(win.scaling_3d_scale, s):
 		win.scaling_3d_scale = s
 		win.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if s < 1.0 else Viewport.SCALING_3D_MODE_BILINEAR
@@ -295,6 +326,8 @@ func _enforce() -> void:
 		var sun: DirectionalLight3D = atmo.get("sun") if atmo != null else null
 		if sun != null and sun.shadow_enabled != shadows_on:
 			sun.shadow_enabled = shadows_on
+		if sun != null and tuning_enabled:
+			_tune_preset(sun)
 	var post: Node = main.get("post")
 	if post != null:
 		var quad: Node3D = post.get("ink_quad")
@@ -310,10 +343,91 @@ func _enforce() -> void:
 			grade.visible = grade_on
 
 
+# ---------------------------------------------------------------- phone tuning
+
+## Re-applies the phone tuning whenever Quality.apply() has just run (see TUNED_MARK).
+func _tune_preset(sun: DirectionalLight3D) -> void:
+	var q := _quality()
+	var p: Dictionary = Quality.PRESETS.get(q, Quality.PRESETS["high"])
+	var dist: float = p["shadow_distance"]
+	if absf(sun.directional_shadow_max_distance - dist) > 0.001:
+		return
+	if q == "high":
+		if get_window().msaa_3d == Viewport.MSAA_4X:
+			get_window().msaa_3d = Viewport.MSAA_2X
+		RenderingServer.directional_shadow_atlas_set_size(HIGH_SHADOW_ATLAS, true)
+		sun.directional_shadow_split_1 = HIGH_SPLIT_1
+	else:
+		sun.directional_shadow_split_1 = DEFAULT_SPLIT_1
+	sun.directional_shadow_max_distance = dist + TUNED_MARK
+	tuned_count += 1
+
+
+func _quality() -> String:
+	var game := _game()
+	return str(game.get_setting("quality")) if game != null else "high"
+
+
+## The preset's own 3D scale at the current window size (Quality.apply_render_scale's formula).
+func preset_scale(q: String) -> float:
+	var p: Dictionary = Quality.PRESETS.get(q, Quality.PRESETS["high"])
+	var size := get_window().size
+	var fit := minf(sqrt(Quality.RENDER_BUDGET_PX / maxf(size.x * size.y, 1.0)), 1.0)
+	return float(p["scale"]) * fit
+
+
+func drs_active() -> bool:
+	return drs_enabled and not profiling and SCALES[scale_i] == 0.0 and drs_scale > 0.0
+
+
+## One automatic-resolution decision: the new scale for `gpu_ms` at `scale` within [lo, hi].
+static func drs_decide(scale: float, gpu_ms: float, lo: float, hi: float, target_ms: float) -> float:
+	if gpu_ms <= 0.01:
+		return scale
+	var budget := target_ms * DRS_HEADROOM
+	var next := scale
+	if gpu_ms > budget:
+		# pixel cost is roughly proportional to scale^2
+		next = scale * clampf(sqrt(budget / gpu_ms), 0.8, 0.97)
+	elif gpu_ms < budget * DRS_GROW_BELOW:
+		next = scale * 1.06
+	next = clampf(next, lo, hi)
+	if absf(next - scale) < DRS_MIN_STEP and next != lo and next != hi:
+		return scale
+	return next
+
+
+func _drs_step(delta: float) -> void:
+	if not drs_enabled or profiling or SCALES[scale_i] != 0.0:
+		return
+	var q := _quality()
+	var hi := preset_scale(q)
+	var lo := minf(preset_scale("low") * DRS_FLOOR, hi)
+	if q != _drs_quality or drs_scale <= 0.0:
+		_drs_quality = q
+		drs_scale = hi
+		_drs_t = 0.0
+		_drs_gpu = 0.0
+		_drs_n = 0
+	drs_scale = clampf(drs_scale, lo, hi)
+	_drs_t += delta
+	_drs_gpu += RenderingServer.viewport_get_measured_render_time_gpu(_vp_rid)
+	_drs_n += 1
+	if _drs_t < DRS_INTERVAL:
+		return
+	var cap: int = CAPS[cap_i]
+	var target_fps := DRS_TARGET_FPS if cap == 0 else minf(float(cap), DRS_TARGET_FPS)
+	drs_scale = drs_decide(drs_scale, _drs_gpu / maxf(_drs_n, 1), lo, hi, 1000.0 / target_fps)
+	_drs_t = 0.0
+	_drs_gpu = 0.0
+	_drs_n = 0
+
+
 # ---------------------------------------------------------------- measuring
 
 func _process(delta: float) -> void:
 	var logic_ms := 0.0 if _stamp.usec == 0 else maxf(Time.get_ticks_usec() - _stamp.usec, 0) / 1000.0
+	_drs_step(delta)
 	_enforce()
 	_update_visibility()
 	var ms := delta * 1000.0
@@ -374,10 +488,10 @@ func _meter_text() -> String:
 	var w: Vector2i = s["window"]
 	var sc: float = s["scale_3d"]
 	var hz: float = s["refresh_hz"]
-	return "%d fps  %.1f ms (worst %.0f)  ·  limit: %s\nCPU %.1f ms  [game logic %.1f · physics %.1f×%.0f · render %.1f]   GPU %.1f ms\n3D %d×%d (%d%%) · %s Hz · %d draws · %dk tris · %s" % [
+	return "%d fps  %.1f ms (worst %.0f)  ·  limit: %s\nCPU %.1f ms  [game logic %.1f · physics %.1f×%.0f · render %.1f]   GPU %.1f ms\n3D %d×%d (%s) · %s Hz · %d draws · %dk tris · %s" % [
 		roundi(s["fps"]), s["frame_ms"], s["worst_ms"], s["limit"],
 		s["cpu_ms"], s["scripts_ms"], s["physics_ms"], s["physics_steps"], s["render_cpu_ms"], s["gpu_ms"],
-		roundi(w.x * sc), roundi(w.y * sc), roundi(sc * 100.0), ("%d" % roundi(hz)) if hz > 0.0 else "?",
+		roundi(w.x * sc), roundi(w.y * sc), ("%d%% auto" % roundi(sc * 100.0)) if drs_active() else ("%d%%" % roundi(sc * 100.0)), ("%d" % roundi(hz)) if hz > 0.0 else "?",
 		s["draw_calls"], roundi(s["triangles"] / 1000.0), str(s["quality"]).capitalize()]
 
 

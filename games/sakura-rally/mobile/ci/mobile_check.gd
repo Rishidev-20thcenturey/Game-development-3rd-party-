@@ -263,6 +263,29 @@ func _perf_lab_checks() -> void:
 	perf.lab_open = false
 	perf.meter_on = false
 	game.set_paused(false)
+	await _seconds(0.3)
+
+	# phone tuning (on by default on phones; forced on here)
+	perf.tuning_enabled = true
+	game.set_setting("quality", "high")
+	await _frames(6)
+	var sun2: DirectionalLight3D = main.map.atmosphere.sun
+	_check(root.msaa_3d == Viewport.MSAA_2X and is_equal_approx(sun2.directional_shadow_split_1, 0.065)
+			and absf(sun2.directional_shadow_max_distance - 320.05) < 0.01,
+			"phone tuning on High: MSAA 2x, tighter first cascade (msaa %d, split %.3f, dist %.2f)" % [
+			root.msaa_3d, sun2.directional_shadow_split_1, sun2.directional_shadow_max_distance])
+	game.set_setting("quality", "low")
+	await _frames(6)
+	_check(is_equal_approx(sun2.directional_shadow_split_1, 0.1) and absf(sun2.directional_shadow_max_distance - 160.05) < 0.01
+			and root.msaa_3d == Viewport.MSAA_DISABLED,
+			"phone tuning follows the switch back to Low (split %.3f, dist %.2f)" % [
+			sun2.directional_shadow_split_1, sun2.directional_shadow_max_distance])
+	perf.tuning_enabled = false
+	# automatic resolution decisions (60 fps target = 16.67 ms)
+	_check(perf.drs_decide(0.71, 30.0, 0.45, 0.71, 16.67) < 0.71, "auto resolution steps down when the GPU is over budget (%.2f)" % perf.drs_decide(0.71, 30.0, 0.45, 0.71, 16.67))
+	_check(perf.drs_decide(0.5, 5.0, 0.45, 0.71, 16.67) > 0.5, "auto resolution steps back up with headroom")
+	_check(perf.drs_decide(0.6, 13.0, 0.45, 0.71, 16.67) == 0.6, "auto resolution holds inside the comfort band")
+	_check(perf.drs_decide(0.46, 60.0, 0.45, 0.71, 16.67) == 0.45, "auto resolution never goes below its floor")
 	await _seconds(0.4)
 	_check(not bool(game.paused) and not bool(perf._panel.visible), "lab closed, drive resumed")
 

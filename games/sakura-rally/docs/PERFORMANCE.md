@@ -215,3 +215,25 @@ The table goes on the clipboard. How to read it:
 **First data point** (Lenovo Legion Y700 / TB320FC, Adreno 730, 2560×1600 at 144 Hz):
 - 30 fps at 3D 100%;
 - GPU 34.5 ms against CPU 8.4 ms, so it is **GPU-bound**.
+
+---
+
+## 9. Shipped: phone tuning of the existing presets (no new settings)
+
+**User finding** (Legion Y700): Low is smooth, Medium is fine, High lags. **Goal:** make High smoother, squeeze Medium and Low further, and let weak phones run Medium smoothly. The presets stay Low / Medium / High; nothing new appears in Settings.
+
+**Automatic 3D resolution** (phones, all presets, `perf_lab.gd`):
+- Every 1.5 s it compares the measured GPU time with 90% of a 60 fps budget (or of the frame cap, if lower).
+- Over budget: the 3D resolution steps down, by at most 20%, and FSR 1 upscales the image.
+- Under 70% of budget: it steps back up by 6%, never above the preset's own resolution.
+- **Floor:** 85% of Low's resolution. On a 2560×1600 tablet that's about 1150×720.
+- Shadows, glow, AA and view distance stay exactly as the preset sets them; only 3D sharpness flexes under load.
+- Changes are spaced out because each one reallocates the render buffers.
+- The lab's fixed resolution values switch it off, so you can compare.
+
+**High on phones:**
+- MSAA 4× → **2×**.
+- Shadow atlas 8192 → **4096**, with the first cascade split 0.1 → **0.065**. Near the car that keeps about 100 px/m of shadow detail (was 128).
+- The re-apply is detected via a +0.05 m mark on the sun's shadow distance, so the tuning survives every `Quality.apply()`: map loads and settings changes.
+
+**Medium and Low:** they get the automatic resolution and the physics catch-up limit. Their next savings come from the GPU profile (§8): ink, grade, outlines and the 2D passes at native resolution.
