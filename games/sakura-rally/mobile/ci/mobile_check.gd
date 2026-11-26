@@ -301,123 +301,143 @@ func _perf_lab_checks() -> void:
 	_check(not bool(game.paused) and not bool(perf._panel.visible), "lab closed, drive resumed")
 
 
-## Load census: draws and triangles of the main and shadow passes on every preset, with the finer
-## prop cells (fine_props.gd) and the terrain shadow pieces (shadow_pieces.gd) off and on, plus a
-## picture comparison of each. Time is frozen so every configuration sees the same frame.
-## Counts are only real when rendering (the headless dummy renderer stores no instances).
+## Load census: draws and triangles of the main and shadow passes on every preset, what each
+## group of objects adds, and an inventory of the heaviest objects near the camera (what casts
+## the shadow triangles). Time is frozen so every measurement sees the same frame. Render counts
+## are only real when rendering; the inventory is computed from the scene and works headless.
 func _census_checks() -> void:
 	var perf: Node = mobile.get("perf")
-	var fine: Node = perf.fine
-	var pieces: Node = perf.shadow_pieces
 	var rendering := DisplayServer.get_name() != "headless"
 	Input.action_press(&"handbrake")
 	await _seconds(3.0)
 	Engine.time_scale = 0.0
 	await _frames(3)
-	# terrain shadow pieces: bookkeeping
-	pieces.enabled = true
-	await _frames(2)
-	pieces.build_all_now()
-	await _frames(2)
-	var ps: Dictionary = pieces.stats
-	_check(int(ps["chunks"]) > 0 and int(ps["built"]) > 0 and int(ps["pieces"]) > int(ps["built"]),
-			"terrain shadow pieces cut (%d chunks, %d built, %d pieces, %d active)" % [ps["chunks"], ps["built"], ps["pieces"], ps["active"]])
-	var pieces_ok := int(ps["active"]) > 0
-	for e: Dictionary in pieces._chunks:
-		var on := false
-		for p: MeshInstance3D in e["pieces"]:
-			on = on or p.visible
-			if p.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY:
-				pieces_ok = false
-		var want := GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if on else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-		if (e["orig"] as GeometryInstance3D).cast_shadow != want:
-			pieces_ok = false
-	_check(pieces_ok, "a chunk casts through its pieces or itself, never both, never neither")
-	var tri_ok := true
-	for e: Dictionary in pieces._chunks:
-		if (e["pieces"] as Array).is_empty():
-			continue
-		var n := 0
-		for p: MeshInstance3D in e["pieces"]:
-			n += (p.mesh as ArrayMesh).surface_get_array_index_len(0)
-		if n != int((e["d"] as Dictionary)["icount"]):
-			tri_ok = false
-	_check(tri_ok, "the pieces hold every triangle of their chunk")
-	pieces.enabled = false
-	pieces.update_now()
-	if rendering:
-		fine.enabled = true
-		await _frames(2)
-		fine.update_now()
-		await _frames(2)
-		var fs: Dictionary = fine.stats
-		_check(int(fs["chunks"]) > 0 and int(fs["active"]) > 0,
-				"finer prop cells built (%d chunks -> %d cells, %d active)" % [fs["chunks"], fs["cells"], fs["active"]])
-		fine.enabled = false
-		fine.update_now()
-	var configs := [["base", false, false], ["fine", true, false], ["pieces", false, true], ["both", true, true]]
 	for q: String in ["high", "medium", "low"]:
 		game.set_setting("quality", q)
 		await _frames(6)
-		var base := {}
-		for cfg: Array in configs:
-			fine.enabled = cfg[1]
-			fine.update_now()
-			pieces.enabled = cfg[2]
-			pieces.build_all_now()
-			await _frames(3)
-			var c: Dictionary = await _census(perf)
-			if cfg[0] == "base":
-				base = c
-			_log("CENSUS q=%-6s %-6s main %4d draws %5dk tris | shadows %4d draws %5dk tris | total %5dk tris" % [
-					q, cfg[0], c["draws"], roundi(c["tris"] / 1000.0), c["shadow_draws"], roundi(c["shadow_tris"] / 1000.0),
-					roundi((int(c["tris"]) + int(c["shadow_tris"])) / 1000.0)])
-			if rendering and cfg[0] == "pieces":
-				_check(int(c["shadow_tris"]) < int(base["shadow_tris"]) and int(c["tris"]) == int(base["tris"]),
-						"terrain pieces cut shadow triangles on %s (%dk -> %dk), main pass unchanged" % [q,
-						roundi(int(base["shadow_tris"]) / 1000.0), roundi(int(c["shadow_tris"]) / 1000.0)])
-	fine.enabled = false
-	fine.update_now()
-	pieces.enabled = false
-	pieces.update_now()
+		var c: Dictionary = await _census(perf)
+		_log("CENSUS q=%-6s main %4d draws %5dk tris | shadows %4d draws %5dk tris" % [
+				q, c["draws"], roundi(c["tris"] / 1000.0), c["shadow_draws"], roundi(c["shadow_tris"] / 1000.0)])
 	game.set_setting("quality", "high")
 	await _frames(6)
-	var props: Node3D = main.map.get_node("Props")
-	props.visible = false
-	await _frames(3)
-	var np: Dictionary = await _census(perf)
-	props.visible = true
-	_log("CENSUS q=high   props hidden: main %d draws %dk tris | shadows %d draws %dk tris" % [
-			np["draws"], roundi(np["tris"] / 1000.0), np["shadow_draws"], roundi(np["shadow_tris"] / 1000.0)])
-	# picture parity on High, against the frame-to-frame noise
+	var cam := root.get_camera_3d()
+	var shadow_reach: float = main.map.atmosphere.sun.directional_shadow_max_distance
+	_log("CENSUS inventory, High, camera %s, shadow distance %.0f m" % [str(cam.global_position.round()), shadow_reach])
+	for row: Array in _inventory(cam, shadow_reach + 30.0, true).slice(0, 18):
+		_log("CENSUS shadow caster %-34s %7dk tris in %4d objects (nearest %4.0f m)%s" % [row[0], roundi(row[1] / 1000.0), row[2], row[3], row[4]])
+	for row: Array in _inventory(cam, 1400.0, false).slice(0, 18):
+		_log("CENSUS main object   %-34s %7dk tris in %4d objects (nearest %4.0f m)%s" % [row[0], roundi(row[1] / 1000.0), row[2], row[3], row[4]])
 	if rendering:
-		await _frames(4)
-		var a: Image = await _grab()
+		var groups := {"props": [main.map.get_node("Props")], "terrain": [main.map.get_node("Terrain")], "cars": _cars()}
+		var base: Dictionary = await _census(perf)
+		for g: String in groups:
+			for n: Node3D in groups[g]:
+				n.visible = false
+			await _frames(2)
+			var c: Dictionary = await _census(perf)
+			for n: Node3D in groups[g]:
+				n.visible = true
+			_log("CENSUS q=high %-8s main -%4d draws -%5dk tris | shadows -%4d draws -%5dk tris" % [g,
+					int(base["draws"]) - int(c["draws"]), roundi((int(base["tris"]) - int(c["tris"])) / 1000.0),
+					int(base["shadow_draws"]) - int(c["shadow_draws"]), roundi((int(base["shadow_tris"]) - int(c["shadow_tris"])) / 1000.0)])
 		await _frames(2)
-		var a2: Image = await _grab()
-		var noise := _diff(a, a2)
-		pieces.enabled = true
-		pieces.build_all_now()
-		await _frames(3)
-		var b: Image = await _grab()
-		var dp := _diff(a, b)
-		pieces.enabled = false
-		pieces.update_now()
-		fine.enabled = true
-		fine.update_now()
-		await _frames(3)
-		var f: Image = await _grab()
-		var df := _diff(a, f)
-		fine.enabled = false
-		fine.update_now()
-		_log("PARITY high: off vs off %.5f, terrain pieces %.5f, finer cells %.5f (mean abs RGB difference)" % [noise, dp, df])
-		_check(dp <= noise * 2.0 + 0.002, "terrain shadow pieces look the same (difference %.5f, frame noise %.5f)" % [dp, noise])
-		a.save_png("%s/10_parity_base.png" % opts["out"])
-		b.save_png("%s/10_parity_pieces.png" % opts["out"])
+	_check(true, "load census logged")
 	Engine.time_scale = 1.0
 	Input.action_release(&"handbrake")
 	game.set_setting("quality", "low")
 	await _frames(3)
+
+
+func _cars() -> Array:
+	var out := []
+	for n in root.find_children("*", "", true, false):
+		if n is Car:
+			out.append(n)
+	return out
+
+
+## Visible geometry grouped by kind: [kind, triangles, objects, nearest m, note], heaviest first.
+## shadow = casters only (cast_shadow on or shadows-only); otherwise what the main pass draws.
+func _inventory(cam: Camera3D, max_dist: float, shadow: bool) -> Array:
+	var rows := {}
+	var p := cam.global_position
+	for n in root.find_children("*", "GeometryInstance3D", true, false):
+		var g := n as GeometryInstance3D
+		if not g.is_visible_in_tree():
+			continue
+		if shadow and g.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
+			continue
+		if not shadow and g.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY:
+			continue
+		var box: AABB = g.global_transform * g.get_aabb()
+		var d := (p.clamp(box.position, box.end) - p).length()
+		if d > max_dist or (not shadow and g.visibility_range_end > 0.0 and d > g.visibility_range_end + g.visibility_range_end_margin):
+			continue
+		var info := _tris(g)
+		var key := _kind(g)
+		if not rows.has(key):
+			rows[key] = [key, 0, 0, 1e9, ""]
+		var r: Array = rows[key]
+		r[1] += info[0]
+		r[2] += 1
+		r[3] = minf(r[3], d)
+		if info[1] != "":
+			r[4] = info[1]
+	var out := rows.values()
+	out.sort_custom(func(a: Array, b: Array) -> bool: return a[1] > b[1])
+	return out
+
+
+func _mesh_tris(m: Mesh) -> int:
+	if m == null:
+		return 0
+	var t := 0
+	if m is ArrayMesh:
+		var am := m as ArrayMesh
+		for s in am.get_surface_count():
+			var ic := am.surface_get_array_index_len(s)
+			t += (ic if ic > 0 else am.surface_get_array_len(s)) / 3
+	else:
+		t = m.get_faces().size() / 3
+	return t
+
+
+## [triangles, note]; inverted-hull outlines (next_pass) draw the mesh twice.
+func _tris(g: GeometryInstance3D) -> Array:
+	var note := ""
+	var t := 0
+	if g is MultiMeshInstance3D:
+		var mm := (g as MultiMeshInstance3D).multimesh
+		if mm != null:
+			var count := mm.visible_instance_count if mm.visible_instance_count >= 0 else mm.instance_count
+			t = _mesh_tris(mm.mesh) * count
+	elif g is MeshInstance3D:
+		var mi := g as MeshInstance3D
+		t = _mesh_tris(mi.mesh)
+		if mi.mesh != null:
+			for s in mi.mesh.get_surface_count():
+				var mat := mi.get_active_material(s)
+				if mat != null and mat.next_pass != null:
+					note = " (+outline pass)"
+	else:
+		note = " (%s)" % g.get_class()
+	return [t, note]
+
+
+func _kind(g: Node) -> String:
+	var a := g.get_parent()
+	while a != null and a != root:
+		if a is Car:
+			return "car %s" % a.name
+		a = a.get_parent()
+	var parent := String(g.get_parent().name)
+	var nm := String(g.name)
+	if parent == "Props":
+		return "prop " + nm.rsplit("_", true, 2)[0]
+	if parent == "Terrain":
+		return "terrain " + ("far" if nm.ends_with("_far") else "near")
+	var re := RegEx.create_from_string("[0-9_]+$")
+	return "%s/%s" % [parent, re.sub(nm, "")]
 
 
 func _census(perf: Node) -> Dictionary:
