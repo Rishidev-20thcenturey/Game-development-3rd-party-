@@ -139,6 +139,7 @@ jobs:
             [ -f "$f.log" ] || { echo "::warning title=$f::no log"; continue; }
             ok=$(grep -cE 'CHECK (ok|PASS)' "$f.log" || true); bad=$(grep -c 'CHECK FAIL' "$f.log" || true)
             echo "::notice title=$f::${ok} checks ok, ${bad} failed$(grep -m1 -o 'SUMMARY.*' "$f.log" | sed 's/^/ — /')"
+            [ "$ok" -gt 0 ] || echo "::error title=$f::no checks ran (script did not load?)"
             grep 'CHECK FAIL' "$f.log" | head -n 15 | sed "s/^.*CHECK FAIL/::warning title=$f FAIL::/" || true
             grep -E 'SCRIPT ERROR|Parse Error|TIMEOUT' "$f.log" | sort | uniq -c | sort -rn | head -n 5 | sed "s/^/::warning title=$f error::/" || true
           done

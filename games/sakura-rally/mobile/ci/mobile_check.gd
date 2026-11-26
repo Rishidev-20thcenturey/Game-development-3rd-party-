@@ -286,11 +286,11 @@ func _perf_lab_checks() -> void:
 			"LOD threshold: 1 px at 100%, 2 px at 50%")
 	perf.tuning_enabled = false
 	root.mesh_lod_threshold = 1.0
-	var st: Dictionary = perf.stats
+	var pst: Dictionary = perf.stats
 	_log("meter: " + str(perf._meter_text()))
-	_check(st.has("jolt_ms") and st.has("physics_scripts_ms") and int(st.get("cars", 0)) >= 1,
+	_check(pst.has("jolt_ms") and pst.has("physics_scripts_ms") and int(pst.get("cars", 0)) >= 1,
 			"meter splits the physics tick (cars %d, tick %.2f, scripts %.2f, cars %.2f ms)" % [
-			int(st.get("cars", 0)), float(st.get("physics_ms", 0.0)), float(st.get("physics_scripts_ms", 0.0)), float(st.get("car_ms", 0.0))])
+			int(pst.get("cars", 0)), float(pst.get("physics_ms", 0.0)), float(pst.get("physics_scripts_ms", 0.0)), float(pst.get("car_ms", 0.0))])
 	# automatic resolution decisions (60 fps target = 16.67 ms)
 	_check(perf.drs_decide(0.71, 30.0, 0.45, 0.71, 16.67) < 0.71, "auto resolution steps down when the GPU is over budget (%.2f)" % perf.drs_decide(0.71, 30.0, 0.45, 0.71, 16.67))
 	_check(perf.drs_decide(0.5, 5.0, 0.45, 0.71, 16.67) > 0.5, "auto resolution steps back up with headroom")
