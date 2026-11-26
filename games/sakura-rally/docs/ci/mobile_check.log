@@ -1,6 +1,87 @@
 Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
 
-SCRIPT ERROR: Parse Error: There is already a variable named "st" declared in this scope.
-          at: GDScript::reload (res://mobile/ci/mobile_check.gd:289)
-ERROR: Failed to load script "res://mobile/ci/mobile_check.gd" with error "Parse error".
-   at: load (modules/gdscript/gdscript_resource_format.cpp:46)
+[   1.3s] CHECK ok   Mobile autoload in touch mode
+[   1.3s] CHECK ok   touch controls created
+[   4.8s] CHECK ok   touch controls hidden on the title hub
+[   4.8s] CHECK ok   Back on the title hub would quit (handler sees the hub)
+[   4.8s] CHECK ok   keyboard hint strip hidden on touch screens
+[   4.8s] TAP @Button@257 at (9.163699, 54.37241)
+[   6.3s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
+[   7.8s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
+[  14.4s] CHECK ok   free roam reached
+[  14.4s] CHECK ok   touch controls shown while driving
+[  14.4s] CHECK ok   HUD tachometer moved to the bottom centre
+[  14.4s] CHECK ok   player car exists
+[  14.6s] CHECK ok   GAS touch presses throttle
+[  17.4s] CHECK ok   car accelerates under touch throttle (88 km/h)
+[  17.6s] CHECK ok   ▶ touch presses steer_right
+[  18.8s] CHECK ok   car turns while ▶ is held (yaw 29.8°)
+[  18.9s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
+[  19.1s] CHECK ok   sliding GAS → BRAKE swaps the pedals
+[  20.2s] CHECK ok   lifting every finger releases every action
+[  20.5s] CHECK ok   multi-touch: GAS + HANDBRAKE together
+[  20.6s] CHECK ok   camera button cycles chase -> chase_far
+[  21.1s] CHECK ok   pause button pauses
+[  21.1s] CHECK ok   touch controls hidden while paused
+[  21.6s] CHECK ok   Back on the pause menu resumes (resume)
+[  22.3s] CHECK ok   Back while driving pauses (pause)
+[  22.8s] CHECK ok   Back again resumes
+[  23.3s] CHECK ok   background: drive paused, controls released
+[  23.6s] CHECK ok   performance lab created
+[  23.6s] CHECK ok   perf meter hidden by default off-phone (clean screenshots)
+[  25.1s] CHECK ok   perf meter shows fps, CPU and GPU time (145 fps  6.9 ms (worst 7)  ·  limit: CPU? (no GPU timer) | CPU 1.0 ms  [game logic 0.3 · physics 0.73×1 · render 0.0]   GPU 0.0 ms | physics tick 0.73 ms = scripts 0.12 + 1 cars 0.19 + Jolt 0.42 | 3D 48×48 (75%) · ? Hz · 0 draws · 0k tris · Low)
+[  25.1s] physics catch-up limit: 12 steps per frame
+[  25.1s] TAP PerfMeter at (51.46667, 2.733334)
+[  25.6s] CHECK ok   tapping the meter pauses and opens the lab
+[  25.6s] TAP Lab_scale at (54.86667, 26.63334)
+[  25.6s] TAP Lab_scale at (54.86667, 26.63334)
+[  25.7s] CHECK ok   lab: 3D resolution 85% (scale 0.85)
+[  25.7s] TAP Lab_ink at (54.86667, 31.43333)
+[  25.7s] TAP Lab_shadows at (54.86667, 29.03333)
+[  25.7s] CHECK ok   lab: ink lines off
+[  25.7s] CHECK ok   lab: sun shadows off
+[  25.7s] TAP Lab_cap at (54.86667, 24.23334)
+[  25.8s] CHECK ok   lab: frame-rate cap 120 (max_fps 120)
+[  25.8s] CHECK ok   lab: report copied
+[  25.8s] CHECK ok   lab: switches restore the normal look (scale 0.75)
+[  29.5s] profile:
+Sakura Rally GPU profile
+device: GenericDevice |  | forward_plus 
+screen: 64x64 @ -1 Hz | quality low | 3D scale 0.75
+As you play                145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+3D 100%                    145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+3D 50%                     145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+3D 25%                     145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Ink lines off              145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Colour grade off           145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Sun shadows off            145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Outline pass off           145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Trees/rocks/buildings off  145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Terrain/road/water off     145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Clouds/petals off          145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+HUD + touch buttons off    145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+Whole 3D world off         145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws
+[  29.5s] CHECK ok   GPU profile ran all 13 steps (13)
+[  29.5s] CHECK ok   GPU profile puts everything back (scale 0.75, mask 1048575)
+[  29.5s] CHECK ok   GPU profile shows its table in the lab
+[  29.8s] CHECK ok   phone tuning on High: MSAA 2x, tighter first cascade (msaa 1, split 0.065, dist 320.05)
+[  29.9s] CHECK ok   phone tuning follows the switch back to Low (split 0.100, dist 160.05)
+[  29.9s] CHECK ok   phone tuning: mesh LOD threshold = one rendered pixel (1.33 at 75%)
+[  29.9s] CHECK ok   LOD threshold: 1 px at 100%, 2 px at 50%
+[  29.9s] meter: 145 fps  6.9 ms (worst 7)  ·  limit: CPU? (no GPU timer)
+CPU 1.0 ms  [game logic 0.3 · physics 0.66×1 · render 0.0]   GPU 0.0 ms
+physics tick 0.66 ms = scripts 0.13 + 1 cars 0.21 + Jolt 0.32
+3D 48×48 (75%) · ? Hz · 0 draws · 0k tris · Low
+[  29.9s] CHECK ok   meter splits the physics tick (cars 1, tick 0.66, scripts 0.13, cars 0.21 ms)
+[  29.9s] CHECK ok   auto resolution steps down when the GPU is over budget (0.57)
+[  29.9s] CHECK ok   auto resolution steps back up with headroom
+[  29.9s] CHECK ok   auto resolution holds inside the comfort band
+[  29.9s] CHECK ok   auto resolution never goes below its floor
+[  30.3s] CHECK ok   lab closed, drive resumed
+[  30.3s] CHECK ok   manual gearbox shows ▲ ▼
+[  32.6s] CHECK ok   ▲ shifts up (gear 1 -> 2)
+[  44.7s] CHECK ok   time trial racing with touch controls
+[  47.4s] CHECK ok   controls hidden again on the menu
+[  48.4s] TAP @Button@243 at (10.39928, 50.70762)
+[  50.1s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
+[  53.1s] SUMMARY: 0 failures
