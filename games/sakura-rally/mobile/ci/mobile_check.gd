@@ -180,6 +180,7 @@ func _run() -> void:
 	await shot("06_stage")
 	_touch(0, "throttle", false)
 	_check(int(game.state) == int(game.State.RACING) and bool(controls.active), "time trial racing with touch controls")
+	await _census_checks()
 
 	# ------------------------------------------------------------ back to the menu
 	game.request_menu()
@@ -298,6 +299,124 @@ func _perf_lab_checks() -> void:
 	_check(perf.drs_decide(0.46, 60.0, 0.45, 0.71, 16.67) == 0.45, "auto resolution never goes below its floor")
 	await _seconds(0.4)
 	_check(not bool(game.paused) and not bool(perf._panel.visible), "lab closed, drive resumed")
+
+
+## Finer prop cells (fine_props.gd) and the device-independent load census: draws and triangles
+## of the main and shadow passes on every preset, with the finer cells off and on, plus a picture
+## comparison. Counts are only real when rendering (the headless run checks the bookkeeping).
+func _census_checks() -> void:
+	var perf: Node = mobile.get("perf")
+	var fine: Node = perf.fine
+	var rendering := DisplayServer.get_name() != "headless"
+	Input.action_press(&"handbrake")
+	await _seconds(3.0)
+	fine.enabled = true
+	await _frames(2)
+	fine.update_now()
+	await _frames(2)
+	var fs: Dictionary = fine.stats
+	_check(int(fs["chunks"]) > 0 and int(fs["cells"]) > int(fs["chunks"]),
+			"finer prop cells built (%d chunks -> %d cells, %d instances)" % [fs["chunks"], fs["cells"], fs["instances"]])
+	_check(int(fs["active"]) > 0, "finer cells swapped in around the camera (%d chunks)" % int(fs["active"]))
+	var swapped_ok := true
+	for e: Dictionary in fine._active.values():
+		var o: Node3D = e["orig"]
+		if o.visible:
+			swapped_ok = false
+		var n := 0
+		for c: MultiMeshInstance3D in e["cells"]:
+			n += c.multimesh.instance_count
+			if not c.visible or c.cast_shadow != (o as GeometryInstance3D).cast_shadow:
+				swapped_ok = false
+		if n != (o as MultiMeshInstance3D).multimesh.instance_count:
+			swapped_ok = false
+	_check(swapped_ok, "each swapped chunk is hidden, its cells shown with every instance and the same shadows")
+	var results := {}
+	for q: String in ["high", "medium", "low"]:
+		game.set_setting("quality", q)
+		await _frames(6)
+		for on: bool in [false, true]:
+			fine.enabled = on
+			fine.update_now()
+			await _frames(3)
+			var c: Dictionary = await _census(perf)
+			results["%s_%s" % [q, on]] = c
+			_log("CENSUS q=%-6s fine=%-5s main %4d draws %5dk tris %4d objects | shadows %4d draws %5dk tris %4d objects" % [
+					q, on, c["draws"], roundi(c["tris"] / 1000.0), c["objects"],
+					c["shadow_draws"], roundi(c["shadow_tris"] / 1000.0), c["shadow_objects"]])
+		if rendering:
+			var off: Dictionary = results["%s_false" % q]
+			var fon: Dictionary = results["%s_true" % q]
+			_check(int(fon["tris"]) + int(fon["shadow_tris"]) <= int(off["tris"]) + int(off["shadow_tris"]),
+					"finer cells cut triangles on %s (%dk -> %dk incl. shadows)" % [q,
+					roundi((int(off["tris"]) + int(off["shadow_tris"])) / 1000.0), roundi((int(fon["tris"]) + int(fon["shadow_tris"])) / 1000.0)])
+	# the rest of the census: what the props and the terrain cost (finer cells off)
+	fine.enabled = false
+	fine.update_now()
+	game.set_setting("quality", "high")
+	await _frames(6)
+	var props: Node3D = main.map.get_node("Props")
+	props.visible = false
+	await _frames(3)
+	var np: Dictionary = await _census(perf)
+	props.visible = true
+	_log("CENSUS q=high   props hidden: main %d draws %dk tris | shadows %d draws %dk tris" % [
+			np["draws"], roundi(np["tris"] / 1000.0), np["shadow_draws"], roundi(np["shadow_tris"] / 1000.0)])
+	# picture parity: finer cells on vs off, against the frame-to-frame noise (wind, petals)
+	if rendering:
+		await _frames(4)
+		var a: Image = await _grab()
+		await _frames(2)
+		var a2: Image = await _grab()
+		fine.enabled = true
+		fine.update_now()
+		await _frames(3)
+		var b: Image = await _grab()
+		var noise := _diff(a, a2)
+		var d := _diff(a, b)
+		_log("PARITY high: off vs off %.4f, off vs fine %.4f (mean abs RGB difference)" % [noise, d])
+		_check(d <= noise * 2.0 + 0.004, "finer cells look the same (difference %.4f, frame noise %.4f)" % [d, noise])
+		a.save_png("%s/10_fine_off.png" % opts["out"])
+		b.save_png("%s/10_fine_on.png" % opts["out"])
+	fine.enabled = false
+	fine.update_now()
+	Input.action_release(&"handbrake")
+	game.set_setting("quality", "low")
+	await _frames(3)
+
+
+func _census(perf: Node) -> Dictionary:
+	var sum := {}
+	for i in 3:
+		await RenderingServer.frame_post_draw
+		var c: Dictionary = perf.census()
+		for k: String in c:
+			sum[k] = int(sum.get(k, 0)) + int(c[k])
+	for k: String in sum:
+		sum[k] = int(sum[k]) / 3
+	return sum
+
+
+func _grab() -> Image:
+	await RenderingServer.frame_post_draw
+	return root.get_texture().get_image()
+
+
+## Mean absolute RGB difference (0..1) of two frames, on a 400-pixel-wide copy.
+func _diff(a: Image, b: Image) -> float:
+	var x := a.duplicate() as Image
+	var y := b.duplicate() as Image
+	var w := 400
+	var h := maxi(roundi(400.0 * a.get_height() / maxf(a.get_width(), 1.0)), 1)
+	x.resize(w, h, Image.INTERPOLATE_BILINEAR)
+	y.resize(w, h, Image.INTERPOLATE_BILINEAR)
+	var total := 0.0
+	for j in h:
+		for i in w:
+			var p := x.get_pixel(i, j)
+			var q := y.get_pixel(i, j)
+			total += absf(p.r - q.r) + absf(p.g - q.g) + absf(p.b - q.b)
+	return total / (w * h * 3.0)
 
 
 func _left_menu() -> bool:

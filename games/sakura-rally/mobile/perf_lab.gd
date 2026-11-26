@@ -74,6 +74,9 @@ const FIRST := -1000000
 const LAST := 1000000
 
 
+const FineProps := preload("res://mobile/fine_props.gd")
+
+
 class Stamp extends Node:
 	var usec := 0
 	## Physics ticks: consecutive ticks inside one frame run back to back, so the time between
@@ -148,6 +151,8 @@ var _drs_prev_frame_ms := 0.0
 var _drs_failures := 0
 var _drs_cooldown := 0.0
 var tuned_count := 0
+## Finer prop cells around the camera (fine_props.gd), on with the phone tuning.
+var fine: Node
 
 
 func setup(mobile: Node, meter_default: bool) -> void:
@@ -167,6 +172,10 @@ func _ready() -> void:
 	_stamp.process_physics_priority = FIRST
 	process_physics_priority = LAST
 	add_child(_stamp)
+	fine = FineProps.new()
+	fine.name = "FineProps"
+	add_child(fine)
+	fine.enabled = tuning_enabled
 	if OS.has_feature("mobile"):
 		Engine.max_physics_steps_per_frame = MAX_PHYSICS_STEPS
 	_vp_rid = get_viewport().get_viewport_rid()
@@ -386,6 +395,18 @@ func _enforce() -> void:
 
 # ---------------------------------------------------------------- phone tuning
 
+## Device-independent load of the last frame: draws, objects and triangles of the main pass and
+## of the shadow passes (the meter's "tris" is the main pass only).
+func census() -> Dictionary:
+	var out := {}
+	for t: Array in [["", RenderingServer.VIEWPORT_RENDER_INFO_TYPE_VISIBLE], ["shadow_", RenderingServer.VIEWPORT_RENDER_INFO_TYPE_SHADOW]]:
+		var kind: int = t[1]
+		out[t[0] + "draws"] = RenderingServer.viewport_get_render_info(_vp_rid, kind, RenderingServer.VIEWPORT_RENDER_INFO_DRAW_CALLS_IN_FRAME)
+		out[t[0] + "objects"] = RenderingServer.viewport_get_render_info(_vp_rid, kind, RenderingServer.VIEWPORT_RENDER_INFO_OBJECTS_IN_FRAME)
+		out[t[0] + "tris"] = RenderingServer.viewport_get_render_info(_vp_rid, kind, RenderingServer.VIEWPORT_RENDER_INFO_PRIMITIVES_IN_FRAME)
+	return out
+
+
 ## Godot measures the mesh LOD threshold in pixels of the window (threshold / window width), not
 ## of the 3D image. At a 3D scale below 100% a 1-pixel threshold keeps detail smaller than one
 ## rendered pixel, which the image can't show. Keep it at one rendered pixel instead.
@@ -594,6 +615,8 @@ func _process(delta: float) -> void:
 		"physics_scripts_ms": cb_ms, "car_ms": car_ms, "cars": _stamp.cars.size(), "jolt_ms": maxf(physics - cb_ms - car_ms, 0.0),
 		"draw_calls": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
 		"triangles": int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)),
+		"shadow_draws": RenderingServer.viewport_get_render_info(_vp_rid, RenderingServer.VIEWPORT_RENDER_INFO_TYPE_SHADOW, RenderingServer.VIEWPORT_RENDER_INFO_DRAW_CALLS_IN_FRAME),
+		"shadow_triangles": RenderingServer.viewport_get_render_info(_vp_rid, RenderingServer.VIEWPORT_RENDER_INFO_TYPE_SHADOW, RenderingServer.VIEWPORT_RENDER_INFO_PRIMITIVES_IN_FRAME),
 		"video_mem_mb": Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0,
 		"window": win.size, "scale_3d": win.scaling_3d_scale, "msaa": win.msaa_3d,
 		"refresh_hz": refresh,
@@ -609,12 +632,12 @@ func _meter_text() -> String:
 	var w: Vector2i = s["window"]
 	var sc: float = s["scale_3d"]
 	var hz: float = s["refresh_hz"]
-	return "%d fps  %.1f ms (worst %.0f)  ·  limit: %s\nCPU %.1f ms  [game logic %.1f · physics %.2f×%.0f · render %.1f]   GPU %.1f ms\nphysics tick %.2f ms = scripts %.2f + %d cars %.2f + Jolt %.2f\n3D %d×%d (%s) · %s Hz · %d draws · %dk tris · %s" % [
+	return "%d fps  %.1f ms (worst %.0f)  ·  limit: %s\nCPU %.1f ms  [game logic %.1f · physics %.2f×%.0f · render %.1f]   GPU %.1f ms\nphysics tick %.2f ms = scripts %.2f + %d cars %.2f + Jolt %.2f\n3D %d×%d (%s) · %s Hz · %d draws · %dk tris · %s\nshadow passes: %d draws · %dk tris" % [
 		roundi(s["fps"]), s["frame_ms"], s["worst_ms"], s["limit"],
 		s["cpu_ms"], s["scripts_ms"], s["physics_ms"], s["physics_steps"], s["render_cpu_ms"], s["gpu_ms"],
 		s["physics_ms"], s["physics_scripts_ms"], s["cars"], s["car_ms"], s["jolt_ms"],
 		roundi(w.x * sc), roundi(w.y * sc), ("%d%% auto" % roundi(sc * 100.0)) if drs_active() else ("%d%%" % roundi(sc * 100.0)), ("%d" % roundi(hz)) if hz > 0.0 else "?",
-		s["draw_calls"], roundi(s["triangles"] / 1000.0), str(s["quality"]).capitalize()]
+		s["draw_calls"], roundi(s["triangles"] / 1000.0), str(s["quality"]).capitalize(), s["shadow_draws"], roundi(s["shadow_triangles"] / 1000.0)]
 
 
 ## Puts a plain-text report on the clipboard (and in user://perf_report.txt).
@@ -667,6 +690,7 @@ func run_profile() -> void:
 		_profile_step(step[0], false)
 		r["key"] = step[0]
 		r["label"] = step[1]
+		r.merge(census())
 		profile_rows.append(r)
 	Input.action_release(&"handbrake")
 	cap_i = saved_cap
@@ -817,8 +841,9 @@ func profile_text() -> String:
 			str(game.get_setting("quality")) if game != null else "?", win.scaling_3d_scale]
 	var lines := PackedStringArray()
 	for r: Dictionary in profile_rows:
-		lines.append("%-26s %5.1f fps  GPU %6.2f ms  render-CPU %5.2f ms  %4d draws" % [
-				r["label"], r["fps"], r["gpu"], r["cpu"], r["draws"]])
+		lines.append("%-26s %5.1f fps  GPU %6.2f ms  render-CPU %5.2f ms  %4d draws %5dk tris | shadows %4d draws %5dk tris" % [
+				r["label"], r["fps"], r["gpu"], r["cpu"], r["draws"], roundi(int(r.get("tris", 0)) / 1000.0),
+				int(r.get("shadow_draws", 0)), roundi(int(r.get("shadow_tris", 0)) / 1000.0)])
 	return head + "\n".join(lines)
 
 
