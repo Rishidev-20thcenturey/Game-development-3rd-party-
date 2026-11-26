@@ -1,32 +1,32 @@
-[   7.55] CHECK PASS free roam reached
-[   7.55] CHECK PASS player car live in free roam
-[   7.55] CHECK PASS free roam opens every gate (2 of 2)
-[  10.55] CHECK PASS car accelerates under throttle (87 km/h)
-[  10.58] CHECK PASS camera_next cycles chase -> chase_far
-[  10.99] CHECK PASS pause action pauses the tree
-[  10.99] CHECK PASS pause menu on screen, focus on Resume
-[  11.80] CHECK PASS car frozen while paused
-[  12.21] CHECK PASS pause action resumes
-[  13.03] CHECK PASS R puts the car back on the road (lat 0.0 m)
-[  13.64] CHECK PASS free roam picks the route up where the car rejoins (progress 0.500)
-[  14.16] CHECK PASS R in free roam lands on the nearest road (3 m along from the rejoin point)
-[  18.65] CHECK PASS free roam: parked on the liaison road (s=1003), no off-route notice
-[  19.67] CHECK PASS free roam: R beside the liaison road lands on it (liaison s=1000, moved 14.3 m)
-[  24.18] CHECK PASS free roam: parked on the liaison road (s=1605), no off-route notice
-[  25.20] CHECK PASS free roam: R beside the liaison road lands on it (liaison s=1601, moved 14.8 m)
-[  29.71] CHECK PASS free roam: parked on the momiji road (s=793), no off-route notice
-[  30.73] CHECK PASS free roam: R beside the momiji road lands on it (momiji s=790, moved 14.3 m)
-[  35.24] CHECK PASS free roam: parked on the momiji road (s=1850), no off-route notice
-[  36.26] CHECK PASS free roam: R beside the momiji road lands on it (momiji s=1846, moved 14.6 m)
-[  69.25] CHECK PASS high preset restores 4x MSAA, full scale
-[  76.29] CHECK PASS held in neutral on the line
-[  76.29] CHECK PASS launch control holds ~4600 rpm (4565)
-[  84.42] CHECK PASS fresh countdown after restart runs its full 3 s (3.02 s)
-[  85.91] CHECK PASS launch off the line (52 km/h, gear 1)
-[  85.91] CHECK PASS timer runs after GO
-[  91.76] CHECK PASS time trial hanami: its route, on its grid (0.0 m), gates closed
-[  94.78] CHECK PASS time trial hanami: timer runs, 6 checkpoints
-[ 100.63] CHECK PASS time trial momiji: its route, on its grid (0.0 m), gates closed
-[ 103.64] CHECK PASS time trial momiji: timer runs, 6 checkpoints
-[ 105.34] CHECK PASS back on the title with normal time
-[ 105.34] SUMMARY: 0 failures
+[   8.20] CHECK PASS free roam reached
+[   8.20] CHECK PASS player car live in free roam
+[   8.20] CHECK PASS free roam opens every gate (2 of 2)
+[  11.19] CHECK PASS car accelerates under throttle (87 km/h)
+[  11.21] CHECK PASS camera_next cycles chase -> chase_far
+[  11.63] CHECK PASS pause action pauses the tree
+[  11.63] CHECK PASS pause menu on screen, focus on Resume
+[  12.43] CHECK PASS car frozen while paused
+[  12.84] CHECK PASS pause action resumes
+[  13.67] CHECK PASS R puts the car back on the road (lat 0.0 m)
+[  14.28] CHECK PASS free roam picks the route up where the car rejoins (progress 0.500)
+[  14.80] CHECK PASS R in free roam lands on the nearest road (3 m along from the rejoin point)
+[  19.30] CHECK PASS free roam: parked on the liaison road (s=1003), no off-route notice
+[  20.32] CHECK PASS free roam: R beside the liaison road lands on it (liaison s=1000, moved 14.3 m)
+[  24.82] CHECK PASS free roam: parked on the liaison road (s=1605), no off-route notice
+[  25.84] CHECK PASS free roam: R beside the liaison road lands on it (liaison s=1601, moved 14.8 m)
+[  30.35] CHECK PASS free roam: parked on the momiji road (s=793), no off-route notice
+[  31.37] CHECK PASS free roam: R beside the momiji road lands on it (momiji s=790, moved 14.3 m)
+[  35.88] CHECK PASS free roam: parked on the momiji road (s=1850), no off-route notice
+[  36.90] CHECK PASS free roam: R beside the momiji road lands on it (momiji s=1846, moved 14.6 m)
+[  69.89] CHECK PASS high preset restores 4x MSAA, full scale
+[  76.93] CHECK PASS held in neutral on the line
+[  76.93] CHECK PASS launch control holds ~4600 rpm (4565)
+[  85.06] CHECK PASS fresh countdown after restart runs its full 3 s (3.02 s)
+[  86.55] CHECK PASS launch off the line (52 km/h, gear 1)
+[  86.55] CHECK PASS timer runs after GO
+[  92.39] CHECK PASS time trial hanami: its route, on its grid (0.0 m), gates closed
+[  95.41] CHECK PASS time trial hanami: timer runs, 6 checkpoints
+[ 101.26] CHECK PASS time trial momiji: its route, on its grid (0.0 m), gates closed
+[ 104.27] CHECK PASS time trial momiji: timer runs, 6 checkpoints
+[ 105.96] CHECK PASS back on the title with normal time
+[ 105.96] SUMMARY: 0 failures
