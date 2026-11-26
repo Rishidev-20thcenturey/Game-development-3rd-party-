@@ -3,3 +3,4 @@ node_modules/
 *.idsig
 *.jks
 *.keystore
+__pycache__/

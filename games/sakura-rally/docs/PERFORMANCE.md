@@ -317,3 +317,22 @@ Tried and dropped (both pixel-identical, picture difference 0.00000 with time fr
 The CI rendered run checks both with a full-resolution pixel comparison under frozen time
 (`PARITY` lines). It also logs, at most, what drawing distant trees as flat pictures could save
 (`props beyond 250/400/600 m` lines) before any work goes into that.
+
+First CI results (`0f2f9b5`, Hanami start, time frozen, 1600×720):
+
+| Preset | culling off → on: main draws | main tris | pixels changed |
+|---|---|---|---|
+| High | 771 → 755 | 644k → 636k | 0.0000% (max 0/255) |
+| Medium | 678 → 668 | 622k → 615k | 0.0000% |
+| Low | 566 → 557 | 589k → 582k | 0.0000% |
+
+- **Fast ink pass:** 0.0121% of pixels differ by more than 2/255, at most 5/255 (mean 0.011/255).
+  That is rounding in the blend; the eye cannot see it.
+- **Culling is exact but small at this spot:** the start looks down an open valley, and the forest
+  is on slopes that face the camera. Behind-the-ridge views (Momiji, the liaison road) should gain
+  more; the phone profile step measures it where the player actually is.
+- **Distant props:** beyond 400 m they are 317 main draws (42% of High's draws) but only 118k
+  triangles (19%), and 53k shadow triangles. Flat-picture trees would mostly save triangles, not
+  draws, so they wait for a device profile showing that the trees are the GPU cost.
+- **Software-GPU profile** (indicative only): original ink copy +28 ms of 1019, culling off
+  +18 ms, trees/rocks/buildings off −683 ms.
