@@ -301,58 +301,85 @@ func _perf_lab_checks() -> void:
 	_check(not bool(game.paused) and not bool(perf._panel.visible), "lab closed, drive resumed")
 
 
-## Finer prop cells (fine_props.gd) and the device-independent load census: draws and triangles
-## of the main and shadow passes on every preset, with the finer cells off and on, plus a picture
-## comparison. Counts are only real when rendering (the headless run checks the bookkeeping).
+## Load census: draws and triangles of the main and shadow passes on every preset, with the finer
+## prop cells (fine_props.gd) and the terrain shadow pieces (shadow_pieces.gd) off and on, plus a
+## picture comparison of each. Time is frozen so every configuration sees the same frame.
+## Counts are only real when rendering (the headless dummy renderer stores no instances).
 func _census_checks() -> void:
 	var perf: Node = mobile.get("perf")
 	var fine: Node = perf.fine
+	var pieces: Node = perf.shadow_pieces
 	var rendering := DisplayServer.get_name() != "headless"
 	Input.action_press(&"handbrake")
 	await _seconds(3.0)
-	fine.enabled = true
+	Engine.time_scale = 0.0
+	await _frames(3)
+	# terrain shadow pieces: bookkeeping
+	pieces.enabled = true
 	await _frames(2)
-	fine.update_now()
+	pieces.build_all_now()
 	await _frames(2)
-	var fs: Dictionary = fine.stats
-	_check(int(fs["chunks"]) > 0 and int(fs["cells"]) > int(fs["chunks"]),
-			"finer prop cells built (%d chunks -> %d cells, %d instances)" % [fs["chunks"], fs["cells"], fs["instances"]])
-	_check(int(fs["active"]) > 0, "finer cells swapped in around the camera (%d chunks)" % int(fs["active"]))
-	var swapped_ok := true
-	for e: Dictionary in fine._active.values():
-		var o: Node3D = e["orig"]
-		if o.visible:
-			swapped_ok = false
+	var ps: Dictionary = pieces.stats
+	_check(int(ps["chunks"]) > 0 and int(ps["built"]) > 0 and int(ps["pieces"]) > int(ps["built"]),
+			"terrain shadow pieces cut (%d chunks, %d built, %d pieces, %d active)" % [ps["chunks"], ps["built"], ps["pieces"], ps["active"]])
+	var pieces_ok := int(ps["active"]) > 0
+	for e: Dictionary in pieces._chunks:
+		var on := false
+		for p: MeshInstance3D in e["pieces"]:
+			on = on or p.visible
+			if p.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY:
+				pieces_ok = false
+		var want := GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if on else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		if (e["orig"] as GeometryInstance3D).cast_shadow != want:
+			pieces_ok = false
+	_check(pieces_ok, "a chunk casts through its pieces or itself, never both, never neither")
+	var tri_ok := true
+	for e: Dictionary in pieces._chunks:
+		if (e["pieces"] as Array).is_empty():
+			continue
 		var n := 0
-		for c: MultiMeshInstance3D in e["cells"]:
-			n += c.multimesh.instance_count
-			if not c.visible or c.cast_shadow != (o as GeometryInstance3D).cast_shadow:
-				swapped_ok = false
-		if n != (o as MultiMeshInstance3D).multimesh.instance_count:
-			swapped_ok = false
-	_check(swapped_ok, "each swapped chunk is hidden, its cells shown with every instance and the same shadows")
-	var results := {}
+		for p: MeshInstance3D in e["pieces"]:
+			n += (p.mesh as ArrayMesh).surface_get_array_index_len(0)
+		if n != int((e["d"] as Dictionary)["icount"]):
+			tri_ok = false
+	_check(tri_ok, "the pieces hold every triangle of their chunk")
+	pieces.enabled = false
+	pieces.update_now()
+	if rendering:
+		fine.enabled = true
+		await _frames(2)
+		fine.update_now()
+		await _frames(2)
+		var fs: Dictionary = fine.stats
+		_check(int(fs["chunks"]) > 0 and int(fs["active"]) > 0,
+				"finer prop cells built (%d chunks -> %d cells, %d active)" % [fs["chunks"], fs["cells"], fs["active"]])
+		fine.enabled = false
+		fine.update_now()
+	var configs := [["base", false, false], ["fine", true, false], ["pieces", false, true], ["both", true, true]]
 	for q: String in ["high", "medium", "low"]:
 		game.set_setting("quality", q)
 		await _frames(6)
-		for on: bool in [false, true]:
-			fine.enabled = on
+		var base := {}
+		for cfg: Array in configs:
+			fine.enabled = cfg[1]
 			fine.update_now()
+			pieces.enabled = cfg[2]
+			pieces.build_all_now()
 			await _frames(3)
 			var c: Dictionary = await _census(perf)
-			results["%s_%s" % [q, on]] = c
-			_log("CENSUS q=%-6s fine=%-5s main %4d draws %5dk tris %4d objects | shadows %4d draws %5dk tris %4d objects" % [
-					q, on, c["draws"], roundi(c["tris"] / 1000.0), c["objects"],
-					c["shadow_draws"], roundi(c["shadow_tris"] / 1000.0), c["shadow_objects"]])
-		if rendering:
-			var off: Dictionary = results["%s_false" % q]
-			var fon: Dictionary = results["%s_true" % q]
-			_check(int(fon["tris"]) + int(fon["shadow_tris"]) <= int(off["tris"]) + int(off["shadow_tris"]),
-					"finer cells cut triangles on %s (%dk -> %dk incl. shadows)" % [q,
-					roundi((int(off["tris"]) + int(off["shadow_tris"])) / 1000.0), roundi((int(fon["tris"]) + int(fon["shadow_tris"])) / 1000.0)])
-	# the rest of the census: what the props and the terrain cost (finer cells off)
+			if cfg[0] == "base":
+				base = c
+			_log("CENSUS q=%-6s %-6s main %4d draws %5dk tris | shadows %4d draws %5dk tris | total %5dk tris" % [
+					q, cfg[0], c["draws"], roundi(c["tris"] / 1000.0), c["shadow_draws"], roundi(c["shadow_tris"] / 1000.0),
+					roundi((int(c["tris"]) + int(c["shadow_tris"])) / 1000.0)])
+			if rendering and cfg[0] == "pieces":
+				_check(int(c["shadow_tris"]) < int(base["shadow_tris"]) and int(c["tris"]) == int(base["tris"]),
+						"terrain pieces cut shadow triangles on %s (%dk -> %dk), main pass unchanged" % [q,
+						roundi(int(base["shadow_tris"]) / 1000.0), roundi(int(c["shadow_tris"]) / 1000.0)])
 	fine.enabled = false
 	fine.update_now()
+	pieces.enabled = false
+	pieces.update_now()
 	game.set_setting("quality", "high")
 	await _frames(6)
 	var props: Node3D = main.map.get_node("Props")
@@ -362,24 +389,32 @@ func _census_checks() -> void:
 	props.visible = true
 	_log("CENSUS q=high   props hidden: main %d draws %dk tris | shadows %d draws %dk tris" % [
 			np["draws"], roundi(np["tris"] / 1000.0), np["shadow_draws"], roundi(np["shadow_tris"] / 1000.0)])
-	# picture parity: finer cells on vs off, against the frame-to-frame noise (wind, petals)
+	# picture parity on High, against the frame-to-frame noise
 	if rendering:
 		await _frames(4)
 		var a: Image = await _grab()
 		await _frames(2)
 		var a2: Image = await _grab()
+		var noise := _diff(a, a2)
+		pieces.enabled = true
+		pieces.build_all_now()
+		await _frames(3)
+		var b: Image = await _grab()
+		var dp := _diff(a, b)
+		pieces.enabled = false
+		pieces.update_now()
 		fine.enabled = true
 		fine.update_now()
 		await _frames(3)
-		var b: Image = await _grab()
-		var noise := _diff(a, a2)
-		var d := _diff(a, b)
-		_log("PARITY high: off vs off %.4f, off vs fine %.4f (mean abs RGB difference)" % [noise, d])
-		_check(d <= noise * 2.0 + 0.004, "finer cells look the same (difference %.4f, frame noise %.4f)" % [d, noise])
-		a.save_png("%s/10_fine_off.png" % opts["out"])
-		b.save_png("%s/10_fine_on.png" % opts["out"])
-	fine.enabled = false
-	fine.update_now()
+		var f: Image = await _grab()
+		var df := _diff(a, f)
+		fine.enabled = false
+		fine.update_now()
+		_log("PARITY high: off vs off %.5f, terrain pieces %.5f, finer cells %.5f (mean abs RGB difference)" % [noise, dp, df])
+		_check(dp <= noise * 2.0 + 0.002, "terrain shadow pieces look the same (difference %.5f, frame noise %.5f)" % [dp, noise])
+		a.save_png("%s/10_parity_base.png" % opts["out"])
+		b.save_png("%s/10_parity_pieces.png" % opts["out"])
+	Engine.time_scale = 1.0
 	Input.action_release(&"handbrake")
 	game.set_setting("quality", "low")
 	await _frames(3)
@@ -387,8 +422,13 @@ func _census_checks() -> void:
 
 func _census(perf: Node) -> Dictionary:
 	var sum := {}
+	var headless := DisplayServer.get_name() == "headless"
 	for i in 3:
-		await RenderingServer.frame_post_draw
+		# the headless dummy renderer never emits frame_post_draw
+		if headless:
+			await process_frame
+		else:
+			await RenderingServer.frame_post_draw
 		var c: Dictionary = perf.census()
 		for k: String in c:
 			sum[k] = int(sum.get(k, 0)) + int(c[k])

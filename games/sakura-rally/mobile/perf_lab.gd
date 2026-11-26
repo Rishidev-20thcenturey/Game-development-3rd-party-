@@ -75,6 +75,7 @@ const LAST := 1000000
 
 
 const FineProps := preload("res://mobile/fine_props.gd")
+const ShadowPieces := preload("res://mobile/shadow_pieces.gd")
 
 
 class Stamp extends Node:
@@ -153,6 +154,8 @@ var _drs_cooldown := 0.0
 var tuned_count := 0
 ## Finer prop cells around the camera (fine_props.gd), on with the phone tuning.
 var fine: Node
+## Terrain shadows cast from smaller pieces of the same triangles (shadow_pieces.gd).
+var shadow_pieces: Node
 
 
 func setup(mobile: Node, meter_default: bool) -> void:
@@ -175,7 +178,11 @@ func _ready() -> void:
 	fine = FineProps.new()
 	fine.name = "FineProps"
 	add_child(fine)
-	fine.enabled = tuning_enabled
+	fine.enabled = false # measured in CI only until the census shows a gain
+	shadow_pieces = ShadowPieces.new()
+	shadow_pieces.name = "ShadowPieces"
+	add_child(shadow_pieces)
+	shadow_pieces.enabled = tuning_enabled
 	if OS.has_feature("mobile"):
 		Engine.max_physics_steps_per_frame = MAX_PHYSICS_STEPS
 	_vp_rid = get_viewport().get_viewport_rid()
