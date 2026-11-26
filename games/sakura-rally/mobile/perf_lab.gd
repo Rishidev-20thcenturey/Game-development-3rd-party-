@@ -31,6 +31,7 @@ const PROFILE_STEPS := [
 	["res50", "3D 50%"],
 	["res25", "3D 25%"],
 	["ink", "Ink lines off"],
+	["inkcopy", "Ink: original screen copy"],
 	["grade", "Colour grade off"],
 	["shadows", "Sun shadows off"],
 	["outlines", "Outline pass off"],
@@ -38,6 +39,7 @@ const PROFILE_STEPS := [
 	["ground", "Terrain/road/water off"],
 	["skyfx", "Clouds/petals off"],
 	["ui", "HUD + touch buttons off"],
+	["occlusion", "Hidden-object culling off"],
 	["world", "Whole 3D world off"],
 ]
 const PROFILE_SETTLE := 0.8
@@ -70,6 +72,16 @@ const PROFILE_MEASURE := 1.7
 ## Process order: the stamp runs before every other node's _process, the lab after all of them,
 ## so the time between the two is the game's own script work for the frame (Godot's
 ## TIME_PROCESS monitor also includes drawing and waiting for the GPU, so it can't tell them apart).
+## Hidden-object culling: Godot's occlusion culling against a copy of the terrain that sits at
+## least 1 m below every terrain surface the game draws (built offline by
+## occluder/make_occluder.py and checked there). Only what a hill really hides is skipped, so the
+## picture is the same; behind ridges whole forest chunks stop costing GPU time. Main view only:
+## shadows are unchanged.
+const OCCLUDER_PATH := "res://mobile/terrain_occluder.bin"
+## The ink pass without its full-screen colour copy: the same blend written as a premultiplied
+## blend (see the shader), so the Mobile renderer no longer copies the frame and builds its
+## mipmaps before the transparent pass whenever no water is on screen.
+const INK_FAST := preload("res://mobile/post_ink_fast.gdshader")
 const FIRST := -1000000
 const LAST := 1000000
 
@@ -114,6 +126,12 @@ var scale_i := 0
 var shadows_on := true
 var ink_on := true
 var grade_on := true
+var occlusion_on := true
+var ink_fast := true
+var occluder_tris := 0
+static var _occluder: ArrayOccluder3D
+static var _occluder_tried := false
+var _ink_original: Shader
 var lab_open := false
 
 ## Latest computed numbers (also read by CI and the report).
@@ -231,7 +249,7 @@ func _build_panel() -> void:
 	_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_panel.offset_right = -24.0
-	_panel.custom_minimum_size = Vector2(500, 0)
+	_panel.custom_minimum_size = Vector2(780, 0)
 	_panel.visible = false
 	add_child(_panel)
 	var col := VBoxContainer.new()
@@ -247,12 +265,18 @@ func _build_panel() -> void:
 	note.add_theme_font_size_override("font_size", 18)
 	note.add_theme_color_override("font_color", Color(0.85, 0.83, 0.8))
 	col.add_child(note)
-	for key: String in ["cap", "scale", "shadows", "ink", "grade", "meter"]:
-		var b := _button("", 24)
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	col.add_child(grid)
+	for key: String in ["cap", "scale", "shadows", "ink", "grade", "occlusion", "inkfast", "meter"]:
+		var b := _button("", 21)
 		b.name = "Lab_" + key
-		b.custom_minimum_size = Vector2(0, 64)
+		b.custom_minimum_size = Vector2(380, 58)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.pressed.connect(_on_row.bind(key))
-		col.add_child(b)
+		grid.add_child(b)
 		_rows[key] = b
 	_profile_btn = _button("Profile GPU (30 s, car still)", 24)
 	_profile_btn.name = "Lab_profile"
@@ -285,6 +309,8 @@ func _refresh_rows() -> void:
 	_rows["shadows"].text = "Sun shadows:  %s" % ("On" if shadows_on else "OFF (test)")
 	_rows["ink"].text = "Ink lines:  %s" % ("On" if ink_on else "OFF (test)")
 	_rows["grade"].text = "Colour grade:  %s" % ("On" if grade_on else "OFF (test)")
+	_rows["occlusion"].text = "Hidden-object culling:  %s" % ("On" if occlusion_on else "OFF (test)")
+	_rows["inkfast"].text = "Ink pass:  %s" % ("Fast, same look" if ink_fast else "Original (test)")
 	_rows["meter"].text = "Meter:  %s" % ("Shown" if meter_on else "Hidden")
 
 
@@ -303,6 +329,10 @@ func _on_row(key: String) -> void:
 			ink_on = not ink_on
 		"grade":
 			grade_on = not grade_on
+		"occlusion":
+			occlusion_on = not occlusion_on
+		"inkfast":
+			ink_fast = not ink_fast
 		"meter":
 			meter_on = not meter_on
 	_refresh_rows()
@@ -360,11 +390,15 @@ func _enforce() -> void:
 		var lod := lod_threshold_for(win.scaling_3d_scale)
 		if not is_equal_approx(win.mesh_lod_threshold, lod):
 			win.mesh_lod_threshold = lod
+	var vp := get_viewport()
+	if vp.use_occlusion_culling != occlusion_on:
+		vp.use_occlusion_culling = occlusion_on
 	var main := _main()
 	if main == null:
 		return
 	var map: Node = main.get("map")
 	if map != null and bool(map.get("is_built")):
+		_ensure_occluder(map as Node3D)
 		var atmo: Node = map.get("atmosphere")
 		var sun: DirectionalLight3D = atmo.get("sun") if atmo != null else null
 		if sun != null and sun.shadow_enabled != shadows_on:
@@ -381,9 +415,56 @@ func _enforce() -> void:
 			quad.visible = true
 		if quad != null:
 			quad.set_meta(&"lab_hidden", not ink_on)
+		var ink_mat := post.get("ink_material") as ShaderMaterial
+		if ink_mat != null:
+			if _ink_original == null and ink_mat.shader != INK_FAST:
+				_ink_original = ink_mat.shader
+			var want: Shader = INK_FAST if ink_fast or _ink_original == null else _ink_original
+			if ink_mat.shader != want:
+				ink_mat.shader = want
 		var grade: CanvasItem = post.get("grade_rect")
 		if grade != null and grade.visible != grade_on:
 			grade.visible = grade_on
+
+
+# ---------------------------------------------------------------- hidden-object culling
+
+## Loads the terrain occluder once (see OCCLUDER_PATH) and puts it in the map's world.
+func _ensure_occluder(map: Node3D) -> void:
+	if map == null or map.has_node(^"TerrainOccluder"):
+		return
+	if not _occluder_tried:
+		_occluder_tried = true
+		_occluder = load_occluder(OCCLUDER_PATH)
+	if _occluder == null:
+		return
+	var oi := OccluderInstance3D.new()
+	oi.name = "TerrainOccluder"
+	oi.occluder = _occluder
+	map.add_child(oi)
+	occluder_tris = _occluder.indices.size() / 3
+
+
+## Reads make_occluder.py's file: gzip of b"SROC", version, vertex count, index count, grid,
+## margin, then f32 xyz vertices and u32 indices.
+static func load_occluder(path: String) -> ArrayOccluder3D:
+	var packed := FileAccess.get_file_as_bytes(path)
+	if packed.is_empty():
+		push_warning("perf: no terrain occluder at %s" % path)
+		return null
+	var data := packed.decompress_dynamic(-1, FileAccess.COMPRESSION_GZIP)
+	if data.size() < 24 or data.slice(0, 4).get_string_from_ascii() != "SROC":
+		push_warning("perf: bad terrain occluder file")
+		return null
+	var nv := data.decode_u32(8)
+	var ni := data.decode_u32(12)
+	var v_end := 24 + nv * 12
+	if data.size() < v_end + ni * 4:
+		push_warning("perf: truncated terrain occluder file")
+		return null
+	var occ := ArrayOccluder3D.new()
+	occ.set_arrays(data.slice(24, v_end).to_vector3_array(), data.slice(v_end, v_end + ni * 4).to_int32_array())
+	return occ
 
 
 # ---------------------------------------------------------------- phone tuning
@@ -625,12 +706,13 @@ func _meter_text() -> String:
 	var w: Vector2i = s["window"]
 	var sc: float = s["scale_3d"]
 	var hz: float = s["refresh_hz"]
-	return "%d fps  %.1f ms (worst %.0f)  ·  limit: %s\nCPU %.1f ms  [game logic %.1f · physics %.2f×%.0f · render %.1f]   GPU %.1f ms\nphysics tick %.2f ms = scripts %.2f + %d cars %.2f + Jolt %.2f\n3D %d×%d (%s) · %s Hz · %d draws · %dk tris · %s\nshadow passes: %d draws · %dk tris" % [
+	return "%d fps  %.1f ms (worst %.0f)  ·  limit: %s\nCPU %.1f ms  [game logic %.1f · physics %.2f×%.0f · render %.1f]   GPU %.1f ms\nphysics tick %.2f ms = scripts %.2f + %d cars %.2f + Jolt %.2f\n3D %d×%d (%s) · %s Hz · %d draws · %dk tris · %s\nshadow passes: %d draws · %dk tris · hidden-object culling %s · ink %s" % [
 		roundi(s["fps"]), s["frame_ms"], s["worst_ms"], s["limit"],
 		s["cpu_ms"], s["scripts_ms"], s["physics_ms"], s["physics_steps"], s["render_cpu_ms"], s["gpu_ms"],
 		s["physics_ms"], s["physics_scripts_ms"], s["cars"], s["car_ms"], s["jolt_ms"],
 		roundi(w.x * sc), roundi(w.y * sc), ("%d%% auto" % roundi(sc * 100.0)) if drs_active() else ("%d%%" % roundi(sc * 100.0)), ("%d" % roundi(hz)) if hz > 0.0 else "?",
-		s["draw_calls"], roundi(s["triangles"] / 1000.0), str(s["quality"]).capitalize(), s["shadow_draws"], roundi(s["shadow_triangles"] / 1000.0)]
+		s["draw_calls"], roundi(s["triangles"] / 1000.0), str(s["quality"]).capitalize(), s["shadow_draws"], roundi(s["shadow_triangles"] / 1000.0),
+		("on" if occlusion_on and occluder_tris > 0 else "off"), ("fast" if ink_fast else "original")]
 
 
 ## Puts a plain-text report on the clipboard (and in user://perf_report.txt).
@@ -640,8 +722,8 @@ func copy_report() -> String:
 	lines.append("device: %s | %s | %d cores" % [OS.get_model_name(), OS.get_processor_name(), OS.get_processor_count()])
 	lines.append("gpu: %s | %s | %s" % [RenderingServer.get_video_adapter_name(),
 			RenderingServer.get_video_adapter_api_version(), RenderingServer.get_current_rendering_method()])
-	lines.append("switches: cap=%s scale=%s shadows=%s ink=%s grade=%s" % [
-			CAPS[cap_i], SCALES[scale_i], shadows_on, ink_on, grade_on])
+	lines.append("switches: cap=%s scale=%s shadows=%s ink=%s grade=%s culling=%s (occluder %dk tris) ink_fast=%s" % [
+			CAPS[cap_i], SCALES[scale_i], shadows_on, ink_on, grade_on, occlusion_on, occluder_tris / 1000, ink_fast])
 	lines.append(_meter_text() if not stats.is_empty() else "(no sample yet)")
 	var text := "\n".join(lines)
 	DisplayServer.clipboard_set(text)
@@ -742,6 +824,14 @@ func _profile_step(key: String, on: bool) -> void:
 			if on:
 				_saved["grade"] = grade_on
 			grade_on = false if on else bool(_saved.get("grade", true))
+		"inkcopy":
+			if on:
+				_saved["inkfast"] = ink_fast
+			ink_fast = false if on else bool(_saved.get("inkfast", true))
+		"occlusion":
+			if on:
+				_saved["occlusion"] = occlusion_on
+			occlusion_on = false if on else bool(_saved.get("occlusion", true))
 		"shadows":
 			if on:
 				_saved["shadows"] = shadows_on

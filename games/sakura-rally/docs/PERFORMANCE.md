@@ -297,3 +297,23 @@ Tried and dropped (both pixel-identical, picture difference 0.00000 with time fr
    triangles +1%, draws +2%. No gain.
 2. **Terrain shadows cast from 4×4 pieces of the same triangles** (finer culling per cascade):
    shadow triangles −5%, shadow draws +45. Not worth the extra draw calls on a phone CPU.
+
+## 12. Same-look levers in the build (on by default on phones, switchable in the lab)
+
+1. **Hidden-object culling.** Godot's occlusion culling, fed with a lowered copy of the terrain
+   (`mobile/terrain_occluder.bin`, 239k triangles on an 8 m grid, made by
+   `occluder/make_occluder.py` from the pinned upstream map). Every surface the game draws (near
+   chunks, far chunks, unranged chunks) is at least 1.00 m above it; the script checks this on a
+   2 m lattice, which is exact for the 4 m terrain grid, and a random 7.5M-point test agrees. All
+   67,107 placed props and every road vertex sit above it. Objects are skipped only when a hill
+   hides all of them. This applies to the main view only; shadows are unchanged. Lab:
+   "Hidden-object culling"; profile step "Hidden-object culling off".
+2. **Fast ink pass.** `mobile/post_ink_fast.gdshader` gives the same lines and the same colour,
+   but the ink's tint by the frame under it, `mix(dst, mix(ink, dst*0.38, 0.24), edge)`, is done
+   by a premultiplied blend instead of a screen-texture read. With no water on screen, the Mobile
+   renderer then skips the full-frame copy and its mipmap chain before the transparent pass.
+   Lab: "Ink pass"; profile step "Ink: original screen copy".
+
+The CI rendered run checks both with a full-resolution pixel comparison under frozen time
+(`PARITY` lines). It also logs, at most, what drawing distant trees as flat pictures could save
+(`props beyond 250/400/600 m` lines) before any work goes into that.

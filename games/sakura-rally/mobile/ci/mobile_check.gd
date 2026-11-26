@@ -257,7 +257,8 @@ func _perf_lab_checks() -> void:
 	_check(props.visible and terrain.visible and quad.visible and sun.shadow_enabled
 			and root.get_camera_3d().cull_mask == cam_mask and is_equal_approx(win.scaling_3d_scale, scale_before)
 			and bool(main.ui.visible) and bool(controls.visible) and perf._outline_cache.is_empty()
-			and not Input.is_action_pressed(&"handbrake") and Engine.max_fps == 0,
+			and not Input.is_action_pressed(&"handbrake") and Engine.max_fps == 0
+			and bool(perf.occlusion_on) and bool(perf.ink_fast) and root.use_occlusion_culling,
 			"GPU profile puts everything back (scale %.2f, mask %d)" % [win.scaling_3d_scale, root.get_camera_3d().cull_mask])
 	_check(bool(perf._results.visible) and bool(perf._panel.visible), "GPU profile shows its table in the lab")
 	await shot("09_profile")
@@ -318,6 +319,8 @@ func _census_checks() -> void:
 		var c: Dictionary = await _census(perf)
 		_log("CENSUS q=%-6s main %4d draws %5dk tris | shadows %4d draws %5dk tris" % [
 				q, c["draws"], roundi(c["tris"] / 1000.0), c["shadow_draws"], roundi(c["shadow_tris"] / 1000.0)])
+	if rendering:
+		await _exact_lever_checks(perf)
 	game.set_setting("quality", "high")
 	await _frames(6)
 	var cam := root.get_camera_3d()
@@ -341,11 +344,108 @@ func _census_checks() -> void:
 					int(base["draws"]) - int(c["draws"]), roundi((int(base["tris"]) - int(c["tris"])) / 1000.0),
 					int(base["shadow_draws"]) - int(c["shadow_draws"]), roundi((int(base["shadow_tris"]) - int(c["shadow_tris"])) / 1000.0)])
 		await _frames(2)
+		# what drawing far trees as flat pictures could save at most: hide prop chunks beyond R
+		var props_root: Node3D = main.map.get_node("Props")
+		var here := cam.global_position
+		for reach: float in [250.0, 400.0, 600.0]:
+			var hidden: Array[GeometryInstance3D] = []
+			for ch in props_root.get_children():
+				var gi := ch as GeometryInstance3D
+				if gi == null or not gi.visible:
+					continue
+				var bx: AABB = gi.global_transform * gi.get_aabb()
+				if (here.clamp(bx.position, bx.end) - here).length() > reach:
+					gi.visible = false
+					hidden.append(gi)
+			await _frames(2)
+			var cf: Dictionary = await _census(perf)
+			for gi in hidden:
+				gi.visible = true
+			_log("CENSUS q=high props beyond %3.0f m (%4d chunks): main -%4d draws -%5dk tris | shadows -%4d draws -%5dk tris" % [
+					reach, hidden.size(), int(base["draws"]) - int(cf["draws"]), roundi((int(base["tris"]) - int(cf["tris"])) / 1000.0),
+					int(base["shadow_draws"]) - int(cf["shadow_draws"]), roundi((int(base["shadow_tris"]) - int(cf["shadow_tris"])) / 1000.0)])
+		await _frames(2)
 	_check(true, "load census logged")
 	Engine.time_scale = 1.0
 	Input.action_release(&"handbrake")
 	game.set_setting("quality", "low")
 	await _frames(3)
+
+
+## The two exact-look levers (hidden-object culling, fast ink pass): what each saves on every
+## preset, and a full-resolution pixel comparison against the frame without it (time frozen).
+func _exact_lever_checks(perf: Node) -> void:
+	_check(int(perf.occluder_tris) > 100000 and main.map.has_node(^"TerrainOccluder") and root.use_occlusion_culling,
+			"terrain occluder loaded (%dk tris), occlusion culling on" % (int(perf.occluder_tris) / 1000))
+	var a0: Image = await _grab()
+	await _frames(2)
+	var a1: Image = await _grab()
+	var noise := _pixels(a0, a1)
+	_log("PARITY frame noise with nothing changed: %.4f%% pixels differ, max %d/255" % [noise[0] * 100.0, noise[1]])
+	for q: String in ["high", "medium", "low"]:
+		game.set_setting("quality", q)
+		await _frames(6)
+		perf.occlusion_on = false
+		perf._enforce()
+		await _frames(12)
+		var off: Dictionary = await _census(perf)
+		var img_off: Image = await _grab()
+		perf.occlusion_on = true
+		perf._enforce()
+		await _frames(12)
+		var on: Dictionary = await _census(perf)
+		var img_on: Image = await _grab()
+		var px := _pixels(img_off, img_on)
+		_log("CENSUS q=%-6s hidden-object culling: main %4d -> %4d draws, %5dk -> %5dk tris | shadows %4d -> %4d draws | PARITY %.4f%% pixels differ, max %d/255" % [
+				q, off["draws"], on["draws"], roundi(off["tris"] / 1000.0), roundi(on["tris"] / 1000.0),
+				off["shadow_draws"], on["shadow_draws"], px[0] * 100.0, px[1]])
+		_check(px[0] <= noise[0] + 0.0005, "hidden-object culling keeps the %s picture (%.4f%% pixels differ)" % [q, px[0] * 100.0])
+		if px[0] > noise[0] + 0.0005:
+			img_off.save_jpg(opts["out"] + "/10_culling_off_%s.jpg" % q, 0.9)
+			img_on.save_jpg(opts["out"] + "/10_culling_on_%s.jpg" % q, 0.9)
+	game.set_setting("quality", "high")
+	await _frames(6)
+	var ink_mat: ShaderMaterial = main.post.ink_material
+	perf.ink_fast = false
+	perf._enforce()
+	await _frames(4)
+	var orig_shader := ink_mat.shader
+	var img_a: Image = await _grab()
+	perf.ink_fast = true
+	perf._enforce()
+	await _frames(4)
+	var img_b: Image = await _grab()
+	var ink_px := _pixels(img_a, img_b)
+	_log("PARITY q=high fast ink pass vs original: %.4f%% pixels differ (by more than 2/255), max %d/255, mean %.3f/255" % [ink_px[0] * 100.0, ink_px[1], ink_px[2]])
+	_check(ink_mat.shader == perf.INK_FAST and orig_shader != perf.INK_FAST, "lab swaps the ink shader (fast <-> original)")
+	_check(ink_px[0] <= noise[0] + 0.0005 and int(ink_px[1]) <= 6, "fast ink pass keeps the picture (%.4f%% pixels, max %d/255)" % [ink_px[0] * 100.0, ink_px[1]])
+	if ink_px[0] > noise[0] + 0.0005 or int(ink_px[1]) > 6:
+		img_a.save_jpg(opts["out"] + "/10_ink_original.jpg", 0.9)
+		img_b.save_jpg(opts["out"] + "/10_ink_fast.jpg", 0.9)
+
+
+## [fraction of pixels whose largest channel difference is over 2/255, largest difference,
+## mean difference] at full resolution.
+func _pixels(a: Image, b: Image) -> Array:
+	var x := a.duplicate() as Image
+	var y := b.duplicate() as Image
+	x.convert(Image.FORMAT_RGB8)
+	y.convert(Image.FORMAT_RGB8)
+	var da := x.get_data()
+	var db := y.get_data()
+	var n := mini(da.size(), db.size())
+	var changed := 0
+	var top := 0
+	var total := 0
+	for i in range(0, n - 2, 3):
+		var dd := maxi(absi(da[i] - db[i]), maxi(absi(da[i + 1] - db[i + 1]), absi(da[i + 2] - db[i + 2])))
+		total += dd
+		if dd > top:
+			top = dd
+		if dd > 2:
+			changed += 1
+	var count := maxi(n / 3, 1)
+	return [float(changed) / count, top, float(total) / count]
 
 
 func _cars() -> Array:
