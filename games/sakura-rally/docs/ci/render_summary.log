@@ -1,95 +1,103 @@
-[   1.9s] CHECK ok   Mobile autoload in touch mode
-[   1.9s] CHECK ok   touch controls created
-[ 108.8s] CHECK ok   touch controls hidden on the title hub
-[ 108.8s] CHECK ok   Back on the title hub would quit (handler sees the hub)
-[ 108.8s] CHECK ok   keyboard hint strip hidden on touch screens
-[ 110.0s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/01_title.png
-[ 141.9s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
-[ 143.1s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/01b_time_attack.png
-[ 170.7s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
-[ 261.4s] TIMEOUT (state=INTRO)
-[ 291.4s] CHECK ok   free roam reached
-[ 291.4s] CHECK ok   touch controls shown while driving
-[ 291.4s] CHECK ok   HUD tachometer moved to the bottom centre
-[ 291.4s] CHECK ok   player car exists
-[ 296.2s] CHECK ok   GAS touch presses throttle
-[ 352.3s] CHECK ok   car accelerates under touch throttle (88 km/h)
-[ 355.7s] CHECK ok   ▶ touch presses steer_right
-[ 357.1s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/02_drive_touch.png
-[ 379.0s] CHECK ok   car turns while ▶ is held (yaw 35.4°)
-[ 381.8s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
-[ 384.5s] CHECK ok   sliding GAS → BRAKE swaps the pedals
-[ 401.4s] CHECK ok   lifting every finger releases every action
-[ 405.9s] CHECK ok   multi-touch: GAS + HANDBRAKE together
-[ 408.7s] CHECK ok   camera button cycles chase -> chase_far
-[ 418.0s] CHECK ok   pause button pauses
-[ 418.0s] CHECK ok   touch controls hidden while paused
-[ 419.0s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/03_pause.png
-[ 426.4s] CHECK ok   Back on the pause menu resumes (resume)
-[ 437.6s] CHECK ok   Back while driving pauses (pause)
-[ 445.7s] CHECK ok   Back again resumes
-[ 454.1s] CHECK ok   background: drive paused, controls released
-[ 459.3s] CHECK ok   performance lab created
-[ 459.3s] CHECK ok   perf meter hidden by default off-phone (clean screenshots)
-[ 480.2s] CHECK ok   perf meter shows fps, CPU and GPU time (30 fps  33.3 ms (worst 33)  ·  limit: GPU | CPU 4.8 ms  [game logic 0.7 · physics 0.65×4 · render 1.6]   GPU 449.4 ms | physics tick 0.65 ms = scripts 0.20 + 1 cars 0.30 + Jolt 0.15 | 3D 1200×675 (75%) · ? Hz · 698 draws · 677k tris · Low | shadow passes: 100 draws · 282k tris)
-[ 488.8s] CHECK ok   tapping the meter pauses and opens the lab
-[ 496.1s] CHECK ok   lab: 3D resolution 85% (scale 0.85)
-[ 504.6s] CHECK ok   lab: ink lines off
-[ 504.6s] CHECK ok   lab: sun shadows off
-[ 509.7s] CHECK ok   lab: frame-rate cap 120 (max_fps 120)
-[ 510.6s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/08_perf_lab.png
-[ 510.6s] CHECK ok   lab: report copied
-[ 511.7s] CHECK ok   lab: switches restore the normal look (scale 0.75)
-As you play                 30.0 fps  GPU 441.15 ms  render-CPU  1.52 ms   699 draws   386k tris | shadows  100 draws   282k tris
-3D 100%                     30.0 fps  GPU 492.22 ms  render-CPU  1.60 ms   700 draws   387k tris | shadows  100 draws   282k tris
-3D 50%                      30.0 fps  GPU 402.45 ms  render-CPU  1.53 ms   700 draws   387k tris | shadows  100 draws   282k tris
-3D 25%                      30.0 fps  GPU 372.89 ms  render-CPU  1.54 ms   700 draws   387k tris | shadows  100 draws   282k tris
-Ink lines off               30.0 fps  GPU 436.49 ms  render-CPU  1.53 ms   699 draws   387k tris | shadows  100 draws   282k tris
-Colour grade off            30.0 fps  GPU 412.71 ms  render-CPU  1.56 ms   699 draws   387k tris | shadows  100 draws   282k tris
-Sun shadows off             30.0 fps  GPU 343.90 ms  render-CPU  1.27 ms   600 draws   387k tris | shadows    0 draws     0k tris
-Outline pass off            30.0 fps  GPU 444.09 ms  render-CPU  1.52 ms   700 draws   375k tris | shadows  100 draws   252k tris
-Trees/rocks/buildings off   30.0 fps  GPU 208.20 ms  render-CPU  0.77 ms   433 draws   287k tris | shadows   20 draws   214k tris
-Terrain/road/water off      30.0 fps  GPU 411.47 ms  render-CPU  1.31 ms   556 draws   194k tris | shadows   91 draws   231k tris
-Clouds/petals off           30.0 fps  GPU 440.59 ms  render-CPU  1.49 ms   697 draws   383k tris | shadows  100 draws   282k tris
-HUD + touch buttons off     30.0 fps  GPU 409.24 ms  render-CPU  1.39 ms   444 draws   384k tris | shadows  100 draws   282k tris
-Whole 3D world off          30.0 fps  GPU 178.04 ms  render-CPU  0.49 ms   258 draws     0k tris | shadows    0 draws     0k tris
-[ 564.3s] CHECK ok   GPU profile ran all 13 steps (13)
-[ 564.3s] CHECK ok   GPU profile puts everything back (scale 0.75, mask 1048575)
-[ 564.3s] CHECK ok   GPU profile shows its table in the lab
-[ 565.5s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/09_profile.png
-[ 584.5s] CHECK ok   phone tuning on High: MSAA 2x, tighter first cascade (msaa 1, split 0.065, dist 320.05)
-[ 587.2s] CHECK ok   phone tuning follows the switch back to Low (split 0.100, dist 160.05)
-[ 587.2s] CHECK ok   phone tuning: mesh LOD threshold = one rendered pixel (1.33 at 75%)
-[ 587.2s] CHECK ok   LOD threshold: 1 px at 100%, 2 px at 50%
-[ 587.2s] CHECK ok   meter splits the physics tick (cars 1, tick 0.65, scripts 0.20, cars 0.31 ms)
-[ 587.2s] CHECK ok   auto resolution steps down when the GPU is over budget (0.57)
-[ 587.2s] CHECK ok   auto resolution steps back up with headroom
-[ 587.2s] CHECK ok   auto resolution holds inside the comfort band
-[ 587.2s] CHECK ok   auto resolution never goes below its floor
-[ 592.8s] CHECK ok   lab closed, drive resumed
-[ 592.8s] CHECK ok   manual gearbox shows ▲ ▼
-[ 626.3s] CHECK ok   ▲ shifts up (gear 1 -> 2)
-[ 627.4s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/04_manual.png
-[ 728.9s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/05_countdown.png
-[ 759.3s] TIMEOUT (state=COUNTDOWN)
-[ 841.3s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/06_stage.png
-[ 841.3s] CHECK ok   time trial racing with touch controls
-[ 902.3s] CHECK ok   finer prop cells built (1331 chunks -> 4025 cells, 30780 instances)
-[ 902.3s] CHECK ok   finer cells swapped in around the camera (48 chunks)
-[ 902.3s] CHECK ok   each swapped chunk is hidden, its cells shown with every instance and the same shadows
-[ 936.3s] CENSUS q=high   fine=false main  352 draws   418k tris  352 objects | shadows  230 draws   692k tris  230 objects
-[ 946.5s] CENSUS q=high   fine=true  main  376 draws   439k tris  376 objects | shadows  259 draws   712k tris  259 objects
-[ 946.5s] CHECK FAIL finer cells cut triangles on high (1110k -> 1151k incl. shadows)
-[ 953.9s] CENSUS q=medium fine=false main  321 draws   392k tris  321 objects | shadows  168 draws   622k tris  168 objects
-[ 956.8s] CENSUS q=medium fine=true  main  343 draws   410k tris  343 objects | shadows  191 draws   637k tris  191 objects
-[ 956.8s] CHECK FAIL finer cells cut triangles on medium (1014k -> 1047k incl. shadows)
-[ 961.5s] CENSUS q=low    fine=false main  280 draws   365k tris  280 objects | shadows  122 draws   315k tris  122 objects
-[ 963.5s] CENSUS q=low    fine=true  main  302 draws   385k tris  302 objects | shadows  127 draws   316k tris  127 objects
-[ 963.5s] CHECK FAIL finer cells cut triangles on low (680k -> 701k incl. shadows)
-[ 978.6s] CENSUS q=high   props hidden: main 66 draws 241k tris | shadows 27 draws 414k tris
-[ 997.0s] PARITY high: off vs off 0.0053, off vs fine 0.0054 (mean abs RGB difference)
-[ 997.0s] CHECK ok   finer cells look the same (difference 0.0054, frame noise 0.0053)
-[1053.2s] CHECK ok   controls hidden again on the menu
-[1112.0s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
-[1160.0s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/07_campaign.png
-[1160.0s] SUMMARY: 3 failures
+[   2.4s] CHECK ok   Mobile autoload in touch mode
+[   2.4s] CHECK ok   touch controls created
+[ 155.1s] CHECK ok   touch controls hidden on the title hub
+[ 155.1s] CHECK ok   Back on the title hub would quit (handler sees the hub)
+[ 155.1s] CHECK ok   keyboard hint strip hidden on touch screens
+[ 156.5s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/01_title.png
+[ 198.7s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
+[ 200.1s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/01b_time_attack.png
+[ 236.3s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
+[ 327.1s] TIMEOUT (state=INTRO)
+[ 364.8s] CHECK ok   free roam reached
+[ 364.8s] CHECK ok   touch controls shown while driving
+[ 364.8s] CHECK ok   HUD tachometer moved to the bottom centre
+[ 364.8s] CHECK ok   player car exists
+[ 370.9s] CHECK ok   GAS touch presses throttle
+[ 443.0s] CHECK ok   car accelerates under touch throttle (88 km/h)
+[ 447.3s] CHECK ok   ▶ touch presses steer_right
+[ 450.7s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/02_drive_touch.png
+[ 478.8s] CHECK ok   car turns while ▶ is held (yaw 32.7°)
+[ 482.6s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
+[ 486.1s] CHECK ok   sliding GAS → BRAKE swaps the pedals
+[ 509.6s] CHECK ok   lifting every finger releases every action
+[ 516.1s] CHECK ok   multi-touch: GAS + HANDBRAKE together
+[ 520.0s] CHECK ok   camera button cycles chase -> chase_far
+[ 532.8s] CHECK ok   pause button pauses
+[ 532.8s] CHECK ok   touch controls hidden while paused
+[ 534.1s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/03_pause.png
+[ 544.4s] CHECK ok   Back on the pause menu resumes (resume)
+[ 560.3s] CHECK ok   Back while driving pauses (pause)
+[ 571.4s] CHECK ok   Back again resumes
+[ 583.0s] CHECK ok   background: drive paused, controls released
+[ 590.0s] CHECK ok   performance lab created
+[ 590.0s] CHECK ok   perf meter hidden by default off-phone (clean screenshots)
+[ 619.2s] CHECK ok   perf meter shows fps, CPU and GPU time (30 fps  33.3 ms (worst 33)  ·  limit: GPU | CPU 5.7 ms  [game logic 0.8 · physics 0.79×4 · render 1.8]   GPU 627.5 ms | physics tick 0.79 ms = scripts 0.25 + 1 cars 0.37 + Jolt 0.17 | 3D 1200×675 (75%) · ? Hz · 731 draws · 711k tris · Low | shadow passes: 105 draws · 286k tris)
+[ 631.4s] CHECK ok   tapping the meter pauses and opens the lab
+[ 641.4s] CHECK ok   lab: 3D resolution 85% (scale 0.85)
+[ 653.3s] CHECK ok   lab: ink lines off
+[ 653.3s] CHECK ok   lab: sun shadows off
+[ 660.3s] CHECK ok   lab: frame-rate cap 120 (max_fps 120)
+[ 661.5s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/08_perf_lab.png
+[ 661.5s] CHECK ok   lab: report copied
+[ 662.9s] CHECK ok   lab: switches restore the normal look (scale 0.75)
+As you play                 30.0 fps  GPU 624.71 ms  render-CPU  1.77 ms   732 draws   416k tris | shadows  105 draws   286k tris
+3D 100%                     30.0 fps  GPU 745.25 ms  render-CPU  1.92 ms   732 draws   416k tris | shadows  105 draws   286k tris
+3D 50%                      30.0 fps  GPU 561.51 ms  render-CPU  1.86 ms   732 draws   416k tris | shadows  105 draws   286k tris
+3D 25%                      30.0 fps  GPU 523.08 ms  render-CPU  1.89 ms   732 draws   416k tris | shadows  105 draws   286k tris
+Ink lines off               30.0 fps  GPU 608.98 ms  render-CPU  1.80 ms   731 draws   416k tris | shadows  105 draws   286k tris
+Colour grade off            30.0 fps  GPU 591.26 ms  render-CPU  1.79 ms   731 draws   416k tris | shadows  105 draws   286k tris
+Sun shadows off             30.0 fps  GPU 470.83 ms  render-CPU  1.48 ms   628 draws   417k tris | shadows    0 draws     0k tris
+Outline pass off            30.0 fps  GPU 620.09 ms  render-CPU  1.86 ms   733 draws   403k tris | shadows  105 draws   256k tris
+Trees/rocks/buildings off   30.0 fps  GPU 276.21 ms  render-CPU  0.86 ms   450 draws   306k tris | shadows   20 draws   214k tris
+Terrain/road/water off      30.0 fps  GPU 565.25 ms  render-CPU  1.63 ms   573 draws   202k tris | shadows   96 draws   235k tris
+Clouds/petals off           30.0 fps  GPU 630.86 ms  render-CPU  1.75 ms   729 draws   411k tris | shadows  105 draws   286k tris
+HUD + touch buttons off     30.0 fps  GPU 597.38 ms  render-CPU  1.72 ms   476 draws   412k tris | shadows  105 draws   286k tris
+Whole 3D world off          30.0 fps  GPU 234.88 ms  render-CPU  0.56 ms   258 draws     0k tris | shadows    0 draws     0k tris
+[ 737.4s] CHECK ok   GPU profile ran all 13 steps (13)
+[ 737.4s] CHECK ok   GPU profile puts everything back (scale 0.75, mask 1048575)
+[ 737.4s] CHECK ok   GPU profile shows its table in the lab
+[ 738.9s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/09_profile.png
+[ 766.4s] CHECK ok   phone tuning on High: MSAA 2x, tighter first cascade (msaa 1, split 0.065, dist 320.05)
+[ 770.1s] CHECK ok   phone tuning follows the switch back to Low (split 0.100, dist 160.05)
+[ 770.1s] CHECK ok   phone tuning: mesh LOD threshold = one rendered pixel (1.33 at 75%)
+[ 770.1s] CHECK ok   LOD threshold: 1 px at 100%, 2 px at 50%
+[ 770.1s] CHECK ok   meter splits the physics tick (cars 1, tick 0.74, scripts 0.23, cars 0.37 ms)
+[ 770.1s] CHECK ok   auto resolution steps down when the GPU is over budget (0.57)
+[ 770.1s] CHECK ok   auto resolution steps back up with headroom
+[ 770.1s] CHECK ok   auto resolution holds inside the comfort band
+[ 770.1s] CHECK ok   auto resolution never goes below its floor
+[ 777.9s] CHECK ok   lab closed, drive resumed
+[ 777.9s] CHECK ok   manual gearbox shows ▲ ▼
+[ 824.8s] CHECK ok   ▲ shifts up (gear 1 -> 2)
+[ 826.0s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/04_manual.png
+[ 916.4s] TIMEOUT (state=INTRO)
+[ 933.6s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/05_countdown.png
+[ 963.7s] TIMEOUT (state=COUNTDOWN)
+[1073.0s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/06_stage.png
+[1073.0s] CHECK ok   time trial racing with touch controls
+[1145.2s] CHECK ok   terrain shadow pieces cut (209 chunks, 9 built, 144 pieces, 9 active)
+[1145.2s] CHECK ok   a chunk casts through its pieces or itself, never both, never neither
+[1145.2s] CHECK ok   the pieces hold every triangle of their chunk
+[1147.5s] CHECK ok   finer prop cells built (1331 chunks -> 4025 cells, 49 active)
+[1192.7s] CENSUS q=high   base   main  290 draws   373k tris | shadows  206 draws   732k tris | total  1105k tris
+[1207.3s] CENSUS q=high   fine   main  297 draws   379k tris | shadows  218 draws   736k tris | total  1115k tris
+[1222.7s] CENSUS q=high   pieces main  290 draws   373k tris | shadows  251 draws   695k tris | total  1068k tris
+[1222.7s] CHECK ok   terrain pieces cut shadow triangles on high (732k -> 695k), main pass unchanged
+[1237.2s] CENSUS q=high   both   main  297 draws   379k tris | shadows  263 draws   699k tris | total  1077k tris
+[1247.3s] CENSUS q=medium base   main  270 draws   359k tris | shadows  156 draws   667k tris | total  1026k tris
+[1251.5s] CENSUS q=medium fine   main  277 draws   364k tris | shadows  163 draws   662k tris | total  1026k tris
+[1256.2s] CENSUS q=medium pieces main  270 draws   359k tris | shadows  194 draws   630k tris | total   989k tris
+[1256.2s] CHECK ok   terrain pieces cut shadow triangles on medium (667k -> 630k), main pass unchanged
+[1260.4s] CENSUS q=medium both   main  277 draws   364k tris | shadows  201 draws   625k tris | total   989k tris
+[1266.7s] CENSUS q=low    base   main  239 draws   334k tris | shadows  116 draws   320k tris | total   654k tris
+[1269.4s] CENSUS q=low    fine   main  246 draws   339k tris | shadows  122 draws   324k tris | total   663k tris
+[1272.3s] CENSUS q=low    pieces main  239 draws   334k tris | shadows  143 draws   301k tris | total   634k tris
+[1272.3s] CHECK ok   terrain pieces cut shadow triangles on low (320k -> 301k), main pass unchanged
+[1275.0s] CENSUS q=low    both   main  246 draws   339k tris | shadows  149 draws   304k tris | total   643k tris
+[1297.9s] CENSUS q=high   props hidden: main 54 draws 212k tris | shadows 20 draws 413k tris
+[1333.8s] PARITY high: off vs off 0.00000, terrain pieces 0.00000, finer cells 0.00000 (mean abs RGB difference)
+[1333.8s] CHECK ok   terrain shadow pieces look the same (difference 0.00000, frame noise 0.00000)
+[1408.3s] CHECK ok   controls hidden again on the menu
+[1485.4s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
+[1548.5s] SHOT /home/runner/work/Game-development-3rd-party-/Game-development-3rd-party-/out/shots/07_campaign.png
+[1548.5s] SUMMARY: 0 failures
