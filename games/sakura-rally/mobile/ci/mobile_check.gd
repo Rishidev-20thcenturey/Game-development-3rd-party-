@@ -280,7 +280,17 @@ func _perf_lab_checks() -> void:
 			and root.msaa_3d == Viewport.MSAA_DISABLED,
 			"phone tuning follows the switch back to Low (split %.3f, dist %.2f)" % [
 			sun2.directional_shadow_split_1, sun2.directional_shadow_max_distance])
+	_check(is_equal_approx(root.mesh_lod_threshold, perf.lod_threshold_for(root.scaling_3d_scale)) and root.mesh_lod_threshold > 1.0,
+			"phone tuning: mesh LOD threshold = one rendered pixel (%.2f at %.0f%%)" % [root.mesh_lod_threshold, root.scaling_3d_scale * 100.0])
+	_check(is_equal_approx(perf.lod_threshold_for(1.0), 1.0) and is_equal_approx(perf.lod_threshold_for(0.5), 2.0),
+			"LOD threshold: 1 px at 100%, 2 px at 50%")
 	perf.tuning_enabled = false
+	root.mesh_lod_threshold = 1.0
+	var st: Dictionary = perf.stats
+	_log("meter: " + str(perf._meter_text()))
+	_check(st.has("jolt_ms") and st.has("physics_scripts_ms") and int(st.get("cars", 0)) >= 1,
+			"meter splits the physics tick (cars %d, tick %.2f, scripts %.2f, cars %.2f ms)" % [
+			int(st.get("cars", 0)), float(st.get("physics_ms", 0.0)), float(st.get("physics_scripts_ms", 0.0)), float(st.get("car_ms", 0.0))])
 	# automatic resolution decisions (60 fps target = 16.67 ms)
 	_check(perf.drs_decide(0.71, 30.0, 0.45, 0.71, 16.67) < 0.71, "auto resolution steps down when the GPU is over budget (%.2f)" % perf.drs_decide(0.71, 30.0, 0.45, 0.71, 16.67))
 	_check(perf.drs_decide(0.5, 5.0, 0.45, 0.71, 16.67) > 0.5, "auto resolution steps back up with headroom")

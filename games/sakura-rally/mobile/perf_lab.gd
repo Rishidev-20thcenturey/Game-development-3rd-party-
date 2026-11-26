@@ -52,6 +52,11 @@ const DRS_GROW_BELOW := 0.7 ## grow when the GPU uses less than 70% of that
 const DRS_INTERVAL := 1.5 ## seconds between changes (each change reallocates render buffers)
 const DRS_MIN_STEP := 0.03
 const DRS_FLOOR := 0.85
+## A step down must make frames at least 4% faster, otherwise it is undone and the next attempt
+## waits DRS_COOLDOWN x failures seconds; after DRS_MAX_FAILURES it stops until the preset changes.
+const DRS_MUST_GAIN := 0.96
+const DRS_COOLDOWN := 45.0
+const DRS_MAX_FAILURES := 2
 ## High on phones: 2x MSAA instead of 4x, a 4096 shadow atlas instead of 8192, and the nearest
 ## cascade tightened (split 0.1 -> 0.065) so shadows near the car keep almost the same texel
 ## density. Godot's default first split is 0.1.
@@ -71,9 +76,34 @@ const LAST := 1000000
 
 class Stamp extends Node:
 	var usec := 0
+	## Physics ticks: consecutive ticks inside one frame run back to back, so the time between
+	## their first callbacks is the whole tick (callbacks + Jolt step + the car's tyre model).
+	var tick_start := 0
+	var tick_sum := 0
+	var tick_n := 0
+	var car_sum := 0
+	var car_n := 0
+	var cars: Array = [] ## refreshed by the lab twice a second
+	var _last_frame := -1
 
 	func _process(_delta: float) -> void:
 		usec = Time.get_ticks_usec()
+
+	func _physics_process(_delta: float) -> void:
+		var now := Time.get_ticks_usec()
+		var f := Engine.get_process_frames()
+		if f == _last_frame and tick_start > 0:
+			tick_sum += now - tick_start
+			tick_n += 1
+		_last_frame = f
+		tick_start = now
+		# each car's tyre model runs in _integrate_forces inside the last physics step
+		var total := 0
+		for car: Variant in cars:
+			if is_instance_valid(car):
+				total += int(car.get("step_usec"))
+		car_sum += total
+		car_n += 1
 const FONT_SIZE := 21
 
 var meter_on := true
@@ -112,6 +142,11 @@ var _drs_t := 0.0
 var _drs_gpu := 0.0
 var _drs_n := 0
 var _drs_quality := ""
+var _drs_check := false
+var _drs_prev_scale := 0.0
+var _drs_prev_frame_ms := 0.0
+var _drs_failures := 0
+var _drs_cooldown := 0.0
 var tuned_count := 0
 
 
@@ -129,6 +164,8 @@ func _ready() -> void:
 	_stamp.name = "PerfStamp"
 	_stamp.process_mode = Node.PROCESS_MODE_ALWAYS
 	_stamp.process_priority = FIRST
+	_stamp.process_physics_priority = FIRST
+	process_physics_priority = LAST
 	add_child(_stamp)
 	if OS.has_feature("mobile"):
 		Engine.max_physics_steps_per_frame = MAX_PHYSICS_STEPS
@@ -317,6 +354,10 @@ func _enforce() -> void:
 	if s > 0.0 and not is_equal_approx(win.scaling_3d_scale, s):
 		win.scaling_3d_scale = s
 		win.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if s < 1.0 else Viewport.SCALING_3D_MODE_BILINEAR
+	if tuning_enabled:
+		var lod := lod_threshold_for(win.scaling_3d_scale)
+		if not is_equal_approx(win.mesh_lod_threshold, lod):
+			win.mesh_lod_threshold = lod
 	var main := _main()
 	if main == null:
 		return
@@ -344,6 +385,13 @@ func _enforce() -> void:
 
 
 # ---------------------------------------------------------------- phone tuning
+
+## Godot measures the mesh LOD threshold in pixels of the window (threshold / window width), not
+## of the 3D image. At a 3D scale below 100% a 1-pixel threshold keeps detail smaller than one
+## rendered pixel, which the image can't show. Keep it at one rendered pixel instead.
+static func lod_threshold_for(scale: float) -> float:
+	return maxf(1.0, 1.0 / maxf(scale, 0.25))
+
 
 ## Re-applies the phone tuning whenever Quality.apply() has just run (see TUNED_MARK).
 func _tune_preset(sun: DirectionalLight3D) -> void:
@@ -406,24 +454,79 @@ func _drs_step(delta: float) -> void:
 	if q != _drs_quality or drs_scale <= 0.0:
 		_drs_quality = q
 		drs_scale = hi
-		_drs_t = 0.0
-		_drs_gpu = 0.0
-		_drs_n = 0
+		_drs_reset()
+		_drs_check = false
+		_drs_failures = 0
+		_drs_cooldown = 0.0
 	drs_scale = clampf(drs_scale, lo, hi)
+	_drs_cooldown = maxf(_drs_cooldown - delta, 0.0)
 	_drs_t += delta
-	_drs_gpu += RenderingServer.viewport_get_measured_render_time_gpu(_vp_rid)
 	_drs_n += 1
+	_drs_gpu += RenderingServer.viewport_get_measured_render_time_gpu(_vp_rid)
 	if _drs_t < DRS_INTERVAL:
+		return
+	var frame_ms := _drs_t * 1000.0 / maxf(_drs_n, 1)
+	var gpu_ms := _drs_gpu / maxf(_drs_n, 1)
+	_drs_reset()
+	if _drs_check:
+		# The last step down must have made frames faster, or resolution isn't what limits this
+		# device right now: go back to the sharper image and stop trying for a while.
+		_drs_check = false
+		if frame_ms > _drs_prev_frame_ms * DRS_MUST_GAIN:
+			drs_scale = _drs_prev_scale
+			_drs_failures += 1
+			_drs_cooldown = DRS_COOLDOWN * _drs_failures
 		return
 	var cap: int = CAPS[cap_i]
 	var target_fps := DRS_TARGET_FPS if cap == 0 else minf(float(cap), DRS_TARGET_FPS)
-	drs_scale = drs_decide(drs_scale, _drs_gpu / maxf(_drs_n, 1), lo, hi, 1000.0 / target_fps)
+	var next := drs_decide(drs_scale, gpu_ms, lo, hi, 1000.0 / target_fps)
+	var gpu_bound := gpu_ms >= frame_ms * 0.85
+	if next < drs_scale:
+		if not gpu_bound or _drs_cooldown > 0.0 or _drs_failures >= DRS_MAX_FAILURES:
+			return
+		_drs_prev_scale = drs_scale
+		_drs_prev_frame_ms = frame_ms
+		_drs_check = true
+	elif next == drs_scale and gpu_ms < frame_ms * 0.7 and drs_scale < hi:
+		# the GPU idles a third of the frame: the limit is elsewhere, give the sharpness back
+		next = minf(drs_scale * 1.06, hi)
+	drs_scale = next
+
+
+func _drs_reset() -> void:
 	_drs_t = 0.0
 	_drs_gpu = 0.0
 	_drs_n = 0
 
 
 # ---------------------------------------------------------------- measuring
+
+var _cb_sum := 0
+var _cb_n := 0
+
+
+## The lab runs last among the physics callbacks: the time since the stamp's first callback is
+## the game's own _physics_process work for this tick.
+func _physics_process(_delta: float) -> void:
+	if _stamp.tick_start > 0:
+		_cb_sum += Time.get_ticks_usec() - _stamp.tick_start
+		_cb_n += 1
+
+
+## Every simulated car: the player's plus race rivals and replay ghosts.
+func _all_cars() -> Array:
+	var out: Array = []
+	var main := _main()
+	if main != null:
+		var car: Variant = main.get("car")
+		if car != null and is_instance_valid(car):
+			out.append(car)
+	for g: StringName in [&"race_rival", &"ghost_car"]:
+		for n in get_tree().get_nodes_in_group(g):
+			if n not in out and n.get("step_usec") != null:
+				out.append(n)
+	return out
+
 
 func _process(delta: float) -> void:
 	var logic_ms := 0.0 if _stamp.usec == 0 else maxf(Time.get_ticks_usec() - _stamp.usec, 0) / 1000.0
@@ -447,9 +550,24 @@ func _process(delta: float) -> void:
 	var steps := clampf(ticks / maxf(fps, 1.0), 1.0, float(Engine.max_physics_steps_per_frame))
 	var scripts: float = _acc["logic"] / n
 	var physics := Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0
+	var tick_ms := physics
+	if _stamp.tick_n > 0:
+		tick_ms = _stamp.tick_sum / 1000.0 / _stamp.tick_n
+	var cb_ms := _cb_sum / 1000.0 / maxf(_cb_n, 1)
+	var car_ms := _stamp.car_sum / 1000.0 / maxf(_stamp.car_n, 1)
+	_stamp.tick_sum = 0
+	_stamp.tick_n = 0
+	_stamp.car_sum = 0
+	_stamp.car_n = 0
+	_cb_sum = 0
+	_cb_n = 0
+	_stamp.cars = _all_cars()
+	physics = tick_ms
 	var render_cpu: float = _acc["rcpu"] / n
 	var gpu: float = _acc["gpu"] / n
 	var cpu := scripts + physics * steps + render_cpu
+	var cpu_busy := cpu / maxf(frame_ms, 0.001)
+	var gpu_busy := gpu / maxf(frame_ms, 0.001)
 	var cap: int = CAPS[cap_i]
 	var refresh := DisplayServer.screen_get_refresh_rate()
 	if refresh <= 1.0 or refresh > 1000.0:
@@ -463,7 +581,9 @@ func _process(delta: float) -> void:
 		limit = "screen"
 	elif gpu <= 0.01:
 		limit = "CPU? (no GPU timer)"
-	elif gpu >= frame_ms * 0.85:
+	elif gpu_busy >= 0.85 and cpu_busy >= 0.85:
+		limit = "CPU+GPU"
+	elif gpu_busy >= 0.85:
 		limit = "GPU"
 	var win := get_window()
 	var game := _game()
@@ -471,6 +591,7 @@ func _process(delta: float) -> void:
 		"fps": fps, "frame_ms": frame_ms, "worst_ms": float(_acc["worst"]),
 		"cpu_ms": cpu, "scripts_ms": scripts, "physics_ms": physics, "physics_steps": steps,
 		"render_cpu_ms": render_cpu, "gpu_ms": gpu, "limit": limit,
+		"physics_scripts_ms": cb_ms, "car_ms": car_ms, "cars": _stamp.cars.size(), "jolt_ms": maxf(physics - cb_ms - car_ms, 0.0),
 		"draw_calls": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
 		"triangles": int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)),
 		"video_mem_mb": Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0,
@@ -488,9 +609,10 @@ func _meter_text() -> String:
 	var w: Vector2i = s["window"]
 	var sc: float = s["scale_3d"]
 	var hz: float = s["refresh_hz"]
-	return "%d fps  %.1f ms (worst %.0f)  ·  limit: %s\nCPU %.1f ms  [game logic %.1f · physics %.1f×%.0f · render %.1f]   GPU %.1f ms\n3D %d×%d (%s) · %s Hz · %d draws · %dk tris · %s" % [
+	return "%d fps  %.1f ms (worst %.0f)  ·  limit: %s\nCPU %.1f ms  [game logic %.1f · physics %.2f×%.0f · render %.1f]   GPU %.1f ms\nphysics tick %.2f ms = scripts %.2f + %d cars %.2f + Jolt %.2f\n3D %d×%d (%s) · %s Hz · %d draws · %dk tris · %s" % [
 		roundi(s["fps"]), s["frame_ms"], s["worst_ms"], s["limit"],
 		s["cpu_ms"], s["scripts_ms"], s["physics_ms"], s["physics_steps"], s["render_cpu_ms"], s["gpu_ms"],
+		s["physics_ms"], s["physics_scripts_ms"], s["cars"], s["car_ms"], s["jolt_ms"],
 		roundi(w.x * sc), roundi(w.y * sc), ("%d%% auto" % roundi(sc * 100.0)) if drs_active() else ("%d%%" % roundi(sc * 100.0)), ("%d" % roundi(hz)) if hz > 0.0 else "?",
 		s["draw_calls"], roundi(s["triangles"] / 1000.0), str(s["quality"]).capitalize()]
 

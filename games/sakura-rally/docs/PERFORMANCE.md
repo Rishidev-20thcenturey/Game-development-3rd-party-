@@ -237,3 +237,34 @@ The table goes on the clipboard. How to read it:
 - The re-apply is detected via a +0.05 m mark on the sun's shadow distance, so the tuning survives every `Quality.apply()`: map loads and settings changes.
 
 **Medium and Low:** they get the automatic resolution and the physics catch-up limit. Their next savings come from the GPU profile (§8): ink, grade, outlines and the 2D passes at native resolution.
+
+## 10. Build after `9ae690d`: smarter auto resolution, LOD threshold, honest physics timing
+
+Findings from the Legion Y700 screenshots on `9ae690d` (all three presets pinned at 45% auto):
+
+- **GPU time barely depends on resolution.** Low still took 22 ms at 1161×726 and High 32 ms.
+  The cost is geometry, draw calls and the shadow cascades, not pixels. Shrinking the image only
+  made Low blurrier.
+- **The old "physics 6.8×4" was a worst case.** Godot's `TIME_PHYSICS_PROCESS` monitor is the
+  *slowest* physics tick of the last second, so multiplying it by the steps per frame overstated
+  the CPU cost.
+
+Changes (phones only; nothing the player has to set):
+
+1. **Auto resolution must earn its keep.** It only steps down when the GPU is the limit (≥85% of
+   the frame), and the next sample must show frames at least 4% faster. Otherwise it goes straight
+   back to the sharper image and waits 45 s (then 90 s); after two misses it stops trying until the
+   preset changes. When the GPU idles a third of the frame, the resolution climbs back to the
+   preset's own scale.
+2. **Mesh LOD threshold = one rendered pixel.** Godot measures `mesh_lod_threshold` in window
+   pixels, so at a 3D scale below 100% it kept sub-pixel detail the image can't show. It is now
+   `1 / scale` (1 px at 100%, 1.33 px at Low's 75%). The picture is the same and there are fewer
+   triangles, in the shadow passes too.
+3. **The meter splits the physics tick.** A new line, `physics tick X ms = scripts + N cars + Jolt`,
+   shows the averaged tick, measured between consecutive ticks inside one frame. It breaks the tick
+   down into the game's `_physics_process` callbacks, the tyre models of all cars
+   (`Car.step_usec`) and the rest (the Jolt step). The limit reads `CPU+GPU` when both are over
+   85% busy.
+
+Not done, on purpose: moving wheel and FX updates out of `_physics_process`. Upstream runs with
+physics interpolation, so it could make the wheels jitter against the body.
