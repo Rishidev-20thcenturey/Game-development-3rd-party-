@@ -268,3 +268,32 @@ Changes (phones only; nothing the player has to set):
 
 Not done, on purpose: moving wheel and FX updates out of `_physics_process`. Upstream runs with
 physics interpolation, so it could make the wheels jitter against the body.
+
+## 11. Load census and two exact-parity experiments (CI, Hanami start, time frozen)
+
+The CI rendered run now logs a device-independent census: draws and triangles of the main pass
+**and the shadow passes**, plus an inventory of the heaviest objects. The meter shows the same
+shadow numbers on a phone (`shadow passes: N draws · Nk tris`), and the GPU profile table has them
+per step.
+
+| High, 1600×720 | main draws | main tris | shadow draws | shadow tris |
+|---|---|---|---|---|
+| everything | 398 | 441k | 268 | 713k |
+| props' share | 332 | 201k | 244 | 325k |
+| terrain's share | 25 | 69k | 16 | 105k |
+| cars' share | 10 | 40k | 2 | 79k |
+
+Medium: 370 draws / 409k main, 187 / 611k shadows. Low: 318 / 380k, 123 / 306k.
+
+- Mesh LOD already does its job: about 11.5M triangles of trees within 1,400 m at full detail
+  become 441k drawn in total.
+- About 1.2M triangles per frame is not extreme for an Adreno 730, so the remaining GPU time is
+  most likely fill-rate work (shadow-map depth through layered canopy, full-screen passes at the
+  native 2560×1600, FSR). That has to be confirmed on the device with the GPU profile table.
+
+Tried and dropped (both pixel-identical, picture difference 0.00000 with time frozen):
+
+1. **Finer prop cells near the camera** (80 m instead of 160 m, for a better per-cell LOD):
+   triangles +1%, draws +2%. No gain.
+2. **Terrain shadows cast from 4×4 pieces of the same triangles** (finer culling per cascade):
+   shadow triangles −5%, shadow draws +45. Not worth the extra draw calls on a phone CPU.
