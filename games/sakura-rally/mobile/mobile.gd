@@ -31,6 +31,10 @@ var controls: TouchControls
 ## Phone optimisations (perf_lab.gd); its fps meter and lab exist only in CI / `--perf` runs.
 var perf: PerfLab
 
+## Boot timeline for CI: [label, ms since the engine started] (autoload, each world build
+## phase, the title hub). A few timestamps, nothing measured per frame.
+var load_marks: Array = []
+
 var _hud_done := false
 ## Keyboard hint strips ([W][A][S][D] Drive…): hidden on touch screens until a gamepad is used.
 var _hints: Array[Control] = []
@@ -39,6 +43,10 @@ var _gamepad_seen := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_mark("autoload")
+	var game := _game()
+	if game != null:
+		game.state_changed.connect(_on_first_menu)
 	var args := OS.get_cmdline_user_args()
 	touch_enabled = OS.has_feature("mobile") or args.has("--touch")
 	if OS.has_feature("mobile"):
@@ -67,7 +75,22 @@ func _on_node_added(node: Node) -> void:
 		c.self_modulate.a = 1.0 if _gamepad_seen else 0.0
 
 
+func _mark(label: String) -> void:
+	load_marks.append([label, Time.get_ticks_msec()])
+
+
+func _on_first_menu(new_state: int, _old: int) -> void:
+	var game := _game()
+	if game != null and new_state == int(game.State.MENU):
+		_mark("menu")
+		game.state_changed.disconnect(_on_first_menu)
+
+
 func _on_race_node(node: Node) -> void:
+	if node is MapWorld and load_marks.size() < 12:
+		_mark("world")
+		(node as MapWorld).build_progress.connect(func(_f: float, label: String) -> void: _mark(label))
+		return
 	if node is RaceField and not node.has_node(^"RaceDirector"):
 		var director := RaceDirector.new()
 		director.name = "RaceDirector"

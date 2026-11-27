@@ -61,6 +61,15 @@ func _run() -> void:
 	var rb: String = mobile.handle_back()
 	await _seconds(1.5)
 	_check(str(title.view) == "title", "Back from Time Attack returns to the hub (%s, view=%s)" % [rb, title.view])
+	# second visit: the stage cards must show again (upstream left the cards row faded out)
+	await _tap_control(title._time_attack_item)
+	await _seconds(1.5)
+	_check(str(title.view) == "time_attack" and _cards_shown(title._time_attack),
+			"Time Attack again: the stage cards show on the second visit (%s)" % _cards_alpha(title._time_attack))
+	mobile.handle_back()
+	await _seconds(1.5)
+	_log(_load_report())
+	_load_benchmarks()
 
 	# ------------------------------------------------------------ free roam, driven by touch
 	game.request_start(opts["map"], game.MODE_FREE_ROAM)
@@ -800,6 +809,168 @@ func _log(s: String) -> void:
 
 func _seconds(s: float) -> void:
 	await create_timer(s, true, false, true).timeout
+
+
+## Every stage card on the Time Attack page is drawn at full opacity (its own alpha times every
+## parent's up to the page).
+func _cards_shown(page: Node) -> bool:
+	var cards: Array = page.get(&"cards")
+	if cards.is_empty():
+		return false
+	for c: CanvasItem in cards:
+		if not c.is_visible_in_tree() or _alpha_up_to(c, page) < 0.95:
+			return false
+	return true
+
+
+func _cards_alpha(page: Node) -> String:
+	var out := PackedStringArray()
+	for c: CanvasItem in page.get(&"cards"):
+		out.append("%.2f" % _alpha_up_to(c, page))
+	return "card alpha " + ", ".join(out)
+
+
+func _alpha_up_to(c: CanvasItem, top: Node) -> float:
+	var a := 1.0
+	var n: Node = c
+	while n != null:
+		if n is CanvasItem:
+			a *= (n as CanvasItem).modulate.a * (n as CanvasItem).self_modulate.a if n == c else (n as CanvasItem).modulate.a
+		if n == top:
+			break
+		n = n.get_parent()
+	return a
+
+
+## The boot timeline mobile.gd recorded: each step's time since the previous one.
+func _load_report() -> String:
+	var marks: Array = mobile.get(&"load_marks")
+	var parts := PackedStringArray()
+	var prev := 0
+	for m: Array in marks:
+		parts.append("%s +%d ms" % [m[0], int(m[1]) - prev])
+		prev = int(m[1])
+	return "LOAD boot (ms since engine start, step by step): " + " | ".join(parts) + " | total %d ms" % prev
+
+
+## What the world build's bulk steps cost on this machine, one by one (CI only): reading and
+## parsing the pack, 67k prop transforms, 27k prop collision shapes, terrain collision.
+func _load_benchmarks() -> void:
+	var t := Time.get_ticks_usec()
+	var text := FileAccess.get_file_as_string("res://assets/maps/world/map.json")
+	var t_read_json := Time.get_ticks_usec() - t
+	t = Time.get_ticks_usec()
+	var info: Variant = JSON.parse_string(text)
+	var t_parse := Time.get_ticks_usec() - t
+	if typeof(info) != TYPE_DICTIONARY:
+		_log("LOAD bench: no map.json")
+		return
+	t = Time.get_ticks_usec()
+	var bin := FileAccess.get_file_as_bytes(str(info["bin"]))
+	var t_bin := Time.get_ticks_usec() - t
+	# prop transforms: the same per-instance work as MapWorld._build_instances
+	var inst: Dictionary = info.get("instances", {})
+	var n := 0
+	t = Time.get_ticks_usec()
+	var mms: Array = []
+	for prop_name: String in inst:
+		var list: Array = inst[prop_name]
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.instance_count = list.size()
+		for k in list.size():
+			var e: Array = list[k]
+			var sc: float = e[4]
+			var b := Basis(Vector3.UP, e[3]).scaled(Vector3(sc, sc, sc))
+			mm.set_instance_transform(k, Transform3D(b, Vector3(e[0], e[1], e[2])))
+		mms.append(mm)
+		n += list.size()
+	var t_xf := Time.get_ticks_usec() - t
+	# the same transforms written as one buffer per MultiMesh
+	t = Time.get_ticks_usec()
+	for prop_name: String in inst:
+		var list: Array = inst[prop_name]
+		var buf := PackedFloat32Array()
+		buf.resize(list.size() * 12)
+		var o := 0
+		for e: Array in list:
+			var sc: float = e[4]
+			var cs := cos(float(e[3])) * sc
+			var sn := sin(float(e[3])) * sc
+			buf[o] = cs; buf[o + 1] = 0.0; buf[o + 2] = sn; buf[o + 3] = e[0]
+			buf[o + 4] = 0.0; buf[o + 5] = sc; buf[o + 6] = 0.0; buf[o + 7] = e[1]
+			buf[o + 8] = -sn; buf[o + 9] = 0.0; buf[o + 10] = cs; buf[o + 11] = e[2]
+			o += 12
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.instance_count = list.size()
+		mm.buffer = buf
+	var t_buf := Time.get_ticks_usec() - t
+	# prop collision: one cylinder per tree, as MapWorld._add_prop_shapes, on a body in the tree
+	var body := StaticBody3D.new()
+	body.collision_layer = 0
+	body.collision_mask = 0
+	root.add_child(body)
+	var shapes := 0
+	t = Time.get_ticks_usec()
+	for prop_name: String in inst:
+		var list: Array = inst[prop_name]
+		for e: Array in list:
+			if shapes >= 25000:
+				break
+			var sc: float = e[4]
+			var shape := CylinderShape3D.new()
+			shape.radius = 0.3 * sc
+			shape.height = 4.0 * sc
+			var sub := body.create_shape_owner(body)
+			body.shape_owner_add_shape(sub, shape)
+			body.shape_owner_set_transform(sub, Transform3D(Basis(Vector3.UP, e[3]), Vector3(e[0], e[1] + 2.0, e[2])))
+			shapes += 1
+	await physics_frame
+	await physics_frame
+	var t_shapes := Time.get_ticks_usec() - t
+	body.queue_free()
+	# terrain collision: trimesh shapes of the first 20 terrain chunks
+	var meshes := 0
+	var tris := 0
+	t = Time.get_ticks_usec()
+	for d: Dictionary in info["meshes"]:
+		if meshes >= 20 or str(d.get("collide", "none")) != "trimesh":
+			continue
+		var off: int = d["offset"]
+		var vc: int = d["vcount"]
+		var verts := PackedVector3Array()
+		var idx := PackedInt32Array()
+		for a: String in d["attrs"]:
+			match a:
+				"pos":
+					verts = bin.slice(off, off + vc * 12).to_vector3_array()
+					off += vc * 12
+				"nrm":
+					off += vc * 12
+				"col":
+					off += vc * 16
+				"uv":
+					off += vc * 8
+				"idx":
+					idx = bin.slice(off, off + int(d["icount"]) * 4).to_int32_array()
+					off += int(d["icount"]) * 4
+		var arr := []
+		arr.resize(Mesh.ARRAY_MAX)
+		arr[Mesh.ARRAY_VERTEX] = verts
+		arr[Mesh.ARRAY_INDEX] = idx
+		var mesh := ArrayMesh.new()
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+		mesh.create_trimesh_shape()
+		meshes += 1
+		tris += idx.size() / 3
+	var t_tri := Time.get_ticks_usec() - t
+	var trimesh_all := 0
+	for d: Dictionary in info["meshes"]:
+		trimesh_all += int(str(d.get("collide", "none")) == "trimesh")
+	_log("LOAD bench (this machine): read map.json %.0f ms, parse %.0f ms, read map.bin %.0f ms (%d MB) | %d prop transforms one by one %.0f ms, as buffers %.0f ms | %d collision cylinders %.0f ms | %d terrain trimesh shapes (%dk tris) %.0f ms, %d such meshes in the world" % [
+			t_read_json / 1000.0, t_parse / 1000.0, t_bin / 1000.0, bin.size() / 1048576, n, t_xf / 1000.0, t_buf / 1000.0,
+			shapes, t_shapes / 1000.0, meshes, tris / 1000, t_tri / 1000.0, trimesh_all])
 
 
 func _frames(n: int) -> void:

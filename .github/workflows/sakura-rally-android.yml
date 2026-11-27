@@ -27,6 +27,9 @@ jobs:
     timeout-minutes: 150
     env:
       PROJ: ${{ github.workspace }}/build/sakura-rally
+      # "[quick]" in the commit message: checks and APK build only (no race battles, no rendered
+      # run, nothing published)
+      QUICK: ${{ contains(github.event.head_commit.message, '[quick]') && '1' || '0' }}
       OUT: ${{ github.workspace }}/out
     steps:
       - uses: actions/checkout@v4
@@ -138,6 +141,7 @@ jobs:
           set -o pipefail
           timeout 1500 godot --headless --disable-crash-handler --fixed-fps 60 --audio-driver Dummy --path "$PROJ" \
             -s res://mobile/ci/race_check.gd -- map=hanami 2>&1 | tee race_check.log | grep -E "CHECK|SUMMARY|RACE|POLICY|FAIL|TIMEOUT" || true
+          if [ "$QUICK" = "1" ]; then echo "quick build: race battles skipped"; exit 0; fi
           for b in upstream plus; do
             timeout 900 godot --headless --disable-crash-handler --fixed-fps 120 --audio-driver Dummy --path "$PROJ" \
               -s res://mobile/ci/race_battle.gd -- route=hanami runs=1 bot=$b 2>&1 | tee "race_battle_$b.log" \
@@ -155,6 +159,7 @@ jobs:
             | sed 's/^/::notice title=race_check (early)::/' || true
 
       - name: Rendered previews (Mobile renderer, software Vulkan)
+        if: env.QUICK != '1'
         continue-on-error: true
         run: |
           set -o pipefail
@@ -181,6 +186,9 @@ jobs:
             [ -f "$f" ] || continue
             grep -E '^(RACE|POLICY|COST|SUMMARY)|RACE ' "$f" | grep -vE 'SUMMARY (mobile|flows)' | head -n 12 \
               | cut -c1-900 | sed "s/^/::notice title=${f%.log}::/" || true
+          done
+          for f in mobile_check.log render.log; do
+            [ -f "$f" ] && { grep -E 'LOAD ' "$f" | head -n 4 | cut -c1-900 | sed "s/^.*LOAD /::notice title=load ${f%.log}::LOAD /" || true; }
           done
           [ -f compile.log ] && { grep -E 'SUMMARY|COMPILE FAIL|Error' compile.log | head -n 6 | sed 's/^/::notice title=compile::/' || true; }
           if [ -f import.log ]; then
@@ -293,6 +301,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Publish GitHub Release
+        if: env.QUICK != '1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -317,7 +326,7 @@ jobs:
           echo "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/$(basename "$APK")" | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Commit preview screenshots + build info
-        if: always() && github.event_name == 'push'
+        if: always() && github.event_name == 'push' && env.QUICK != '1'
         run: |
           set -euo pipefail
           D=games/sakura-rally/docs/ci
@@ -351,7 +360,7 @@ jobs:
           for b in upstream plus upstream80 plus80; do
             grep -E "^(RACE|SUMMARY|COST|BOT)|ERROR" "race_battle_$b.log" > "$D/race_battle_$b.log" || true
           done
-          grep -E "CHECK|SUMMARY|SHOT|TIMEOUT|CENSUS|PARITY| fps  GPU|NAN|RACE" render.log > "$D/render_summary.log" || true
+          grep -E "CHECK|SUMMARY|SHOT|TIMEOUT|CENSUS|PARITY| fps  GPU|NAN|RACE|LOAD" render.log > "$D/render_summary.log" || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$D"

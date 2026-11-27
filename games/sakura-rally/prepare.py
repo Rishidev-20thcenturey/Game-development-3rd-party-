@@ -3,7 +3,7 @@
 
     python3 games/sakura-rally/prepare.py <path-to-upstream-checkout>
 
-It changes one line of one upstream script (PATCHES below) and otherwise only:
+It changes two lines of upstream scripts (PATCHES below: the race bot, a menu fix) and otherwise only:
   * copies mobile/ (autoload, touch controls, race layer, CI checks) and the launcher icons into
     res://mobile/;
   * adds the `Mobile` autoload and the Android-specific project settings to project.godot. Each
@@ -45,6 +45,11 @@ PATCHES = [
     ("scripts/main.gd",
      "\t\tvar bot := RaceBot.new()\n",
      '\t\tvar bot: RaceBot = (load("res://mobile/race/race_bot_plus.gd") as GDScript).new()\n'),
+    # Upstream bug: Back from Time Attack fades the whole cards row out (leave()), but enter()
+    # only fades the cards themselves back in, so the second visit showed no stage cards.
+    ("scripts/ui/screens/time_attack_panel.gd",
+     "\tUIMotion.layout_now(self)\n\tvar d := delay\n",
+     "\tUIMotion.layout_now(self)\n\t_cards_row.modulate.a = 1.0\n\tvar d := delay\n"),
 ]
 
 
