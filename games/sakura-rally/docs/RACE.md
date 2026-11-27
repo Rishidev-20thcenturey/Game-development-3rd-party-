@@ -85,11 +85,12 @@ O(samples) pass that agrees with a time-stepped simulation to 0.1 s. It then sca
 by that lap over the stage's calibrated flying lap for the car's model and pace.
 
 No car goes on rails while another car is level with it (within about 7 m of road). If a car on
-rails finds itself level with another, it settles the pair: 4% quicker if it is level or ahead,
-4% slower if it is behind. Without this, two cars at the same average pace could run level and
-swap places in the running order hundreds of times a race (one CI race logged 1,563 swaps
-between two rivals, 3 m apart, all while one was on rails). That never showed on screen, because
-cars on rails are out of sight, but the position list flickered.
+rails finds itself level with another at matched pace (speeds within 1.5 m/s), it settles the pair
+by the running order: 4% quicker if it is ahead, 4% slower if it is behind. Both cars agree on who
+is ahead, so the pair always separates; a clearly faster car just passes. Without this, two cars at
+the same pace could run level and swap places in the running order hundreds of times a race. One
+CI race logged 1,161 swaps between two rivals on rails side by side, 3 m apart, both speeding up
+because each counted itself "level". After the fix: 40 swaps with rails on, 28 without.
 
 The car wakes before it can be seen or touched. That happens within 160 m and in view, within
 42 m anywhere, within 40 m of road from your car, or when the spot one second ahead comes into

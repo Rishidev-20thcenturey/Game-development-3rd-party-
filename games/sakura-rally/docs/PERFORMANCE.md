@@ -342,3 +342,33 @@ First CI results (`0f2f9b5`, Hanami start, time frozen, 1600×720):
   draws, so they wait for a device profile showing that the trees are the GPU cost.
 - **Software-GPU profile** (indicative only): original ink copy +28 ms of 1019, culling off
   +18 ms, trees/rocks/buildings off −683 ms.
+
+## 13. Faster loading (same world)
+
+The CI boot timeline (`mobile.gd` records it; `mobile_check.gd` prints `LOAD` lines) showed the
+world build spending most of its time in collision, not in reading or drawing:
+
+| Step (CI, headless) | Before | After |
+|---|---|---|
+| Read map pack, routes, season grid | 55 ms | 68 ms |
+| Sky, materials | 15 ms | 18 ms |
+| Terrain meshes and terrain collision | 1,186 ms | 1,428 ms (run-to-run noise) |
+| Props: 67k placements and ~26k colliders | **1,521 ms** | **338 ms** |
+| Barriers, gates, signs, parked cars | **214 ms** | **39 ms** |
+| World build total | 2,991 ms | 1,891 ms (−37%) |
+
+**Why.** Godot's Jolt backend rebuilds a body's whole compound shape on every shape added, and on
+every shape transform set, while the body is in the physics space
+(`JoltShapedObject3D::commit_shapes`). The game added each collider to bodies already in the tree,
+so filling a body cost O(n²). A CI benchmark puts 1,500 cylinders on one body: **666 ms** filled
+inside the space, **6 ms** filled first and then added.
+
+**Change** (`prepare.py`, `map_world.gd`): the terrain body, the prop root (with its chunk bodies)
+and the barrier body are filled first and enter the tree once, in the same place among their
+siblings. Nothing else changes. CI checks the result: terrain 166/166 pieces, props 25,982/25,982
+shapes, barriers 903/903 boxes, and physics queries hit the ground under the spawn, a barrier and
+a tree trunk. On a phone CPU the saving should be a few seconds per launch.
+
+Measured and left alone (fast already): reading the 43 MB mesh pack (21–24 ms), parsing the 2.5 MB
+JSON (32–37 ms), the 67k prop transforms (15–18 ms).
+

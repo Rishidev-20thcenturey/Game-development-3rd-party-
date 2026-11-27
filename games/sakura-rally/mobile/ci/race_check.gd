@@ -290,8 +290,8 @@ func _race(rails: bool) -> Dictionary:
 				w["why"] = "slow (%.1f m/s)" % c.linear_velocity.length()
 			if not bool(w["ok"]):
 				bad += 1
-				print("RACE %s: woken car %s went wrong %.1f s after waking: %s; nearest other car %.1f m" % [
-						tag, c.name, t - float(w["from"]), w["why"], _nearest_car(c, race)])
+				print("RACE %s: woken car %s went wrong %.1f s after waking: %s; nearest other car %.1f m; %s" % [
+						tag, c.name, t - float(w["from"]), w["why"], _nearest_car(c, race), _near_report(c, race)])
 	var ticks := maxi(meter.ticks - tick0, 1)
 	var wall_us := (Time.get_ticks_usec() - wall0) / float(ticks)
 	var car_us := (meter.car_usec - car0) / float(ticks)
@@ -351,6 +351,22 @@ func _churn_state(e: RaceField.Entrant, race: RaceField) -> String:
 	var lat: float = race.track.lateral(e.idx, c.global_position) if race.track != null else NAN
 	return "%s dist %.1f idx %d v %.1f m/s %s lat %.1f pos %s" % [str(e.info.get("name", "?")), e.dist, e.idx,
 			c.linear_velocity.length(), "physics" if c.can_process() else "RAILS", lat, c.global_position.round()]
+
+
+## The woken car and the car nearest to it, as churn reports print them.
+func _near_report(c: Car, race: RaceField) -> String:
+	var me: RaceField.Entrant = null
+	var near: RaceField.Entrant = null
+	var best := INF
+	for e in race.entrants:
+		if e.car == c:
+			me = e
+		elif is_instance_valid(e.car) and e.car.global_position.distance_to(c.global_position) < best:
+			best = e.car.global_position.distance_to(c.global_position)
+			near = e
+	if me == null or near == null:
+		return "-"
+	return "%s | %s" % [_churn_state(me, race), _churn_state(near, race)]
 
 
 func _nearest_car(c: Car, race: RaceField) -> float:
