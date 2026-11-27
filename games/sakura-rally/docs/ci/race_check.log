@@ -1,16 +1,14 @@
 CHECK ok    driver policy loads
-ERROR: String formatting error: unsupported format character.
-POLICY batched network: worst logit difference %.2e, same options %d/%d, %.0f us -> %.0f us per evaluation (%.1fx)
-ERROR: String formatting error: unsupported format character.
-CHECK ok    batched network: logits match DrivePolicy (worst %.2e)
+POLICY batched network: worst logit difference 2.86102294921875e-06, same options 400/400, 654 us -> 74 us per evaluation (8.8x)
+CHECK ok    batched network: logits match DrivePolicy (worst 2.86102294921875e-06)
 CHECK ok    batched network: the same options (400/400)
-CHECK ok    batched network: faster (98 vs 852 us)
+CHECK ok    batched network: faster (74 vs 654 us)
 CHECK ok    race off: a race director, rails off
 CHECK ok    race off: every rival races with race_bot_plus.gd (6/6)
 CHECK ok    race off: the rivals decide in 6 different ticks ([0, 2, 4, 6, 8, 10])
 RACE off: rival paces from pole 0.602, 0.658, 0.684, 0.724, 0.741, 0.772
-RACE off: 306.5 s, 36776 ticks: physics tick 3816 us (whole engine, headless), cars' physics 1666 us per tick, rails 0% of rival ticks, 0 sleeps, 0 wakes (0 went wrong), rescues 1, flips 0, places gained on track 43, attack 8404 / draft 3804 / defend 181 decisions
-RACE off: classification 1 Aoi Fujimura 4:34.026 | 2 Ren Takeda 4:34.489 | 3 Kenji Hayashi 4:41.304 | 4 Mei Sakamoto 4:46.294 | 5 Daichi Ono 4:55.554 | 6 You 4:56.096 | 7 Hana Kobayashi 5:05.377
+RACE off: 306.4 s, 36769 ticks: physics tick 2915 us (whole engine, headless), cars' physics 1276 us per tick, rails 0% of rival ticks, 0 sleeps, 0 wakes (0 went wrong), rescues 0, flips 0, places gained on track 76, attack 8746 / draft 3561 / defend 147 decisions
+RACE off: classification 1 Aoi Fujimura 4:26.976 | 2 Mei Sakamoto 4:40.694 | 3 Kenji Hayashi 4:51.103 | 4 Ren Takeda 4:54.618 | 5 Daichi Ono 5:00.508 | 6 You 5:01.089 | 7 Hana Kobayashi 5:05.319
 CHECK ok    race off: every rival finished (6/6)
 CHECK ok    race off: every car woken from rails drove on (0 of 0 went wrong)
 CHECK ok    race off: no rival on rails (0)
@@ -18,44 +16,13 @@ CHECK ok    race on: a race director, rails on
 CHECK ok    race on: every rival races with race_bot_plus.gd (6/6)
 CHECK ok    race on: the rivals decide in 6 different ticks ([0, 2, 4, 6, 8, 10])
 RACE on: rival paces from pole 0.602, 0.658, 0.684, 0.724, 0.741, 0.772
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 76.0 m off the road
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 194.2 m off the road
-RACE on: woken car Rival4 went wrong 0.0 s after waking: 113.4 m off the road
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 38.5 m off the road
-RACE on: woken car Rival4 went wrong 0.0 s after waking: 143.9 m off the road
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 315.3 m off the road
-RACE on: woken car Rival4 went wrong 0.0 s after waking: 82.3 m off the road
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 514.8 m off the road
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 606.4 m off the road
-RACE on: woken car Rival3 went wrong 0.0 s after waking: 88.9 m off the road
-RACE on: woken car Rival3 went wrong 0.0 s after waking: 189.2 m off the road
-RACE on: woken car Rival5 went wrong 0.0 s after waking: 120.9 m off the road
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 617.3 m off the road
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 48.6 m off the road
-RACE on: woken car Rival4 went wrong 0.0 s after waking: 90.6 m off the road
-RACE on: woken car Rival3 went wrong 0.0 s after waking: 610.7 m off the road
-RACE on: woken car Rival5 went wrong 0.0 s after waking: 693.9 m off the road
-RACE on: woken car Rival5 went wrong 0.0 s after waking: 265.4 m off the road
-RACE on: woken car Rival3 went wrong 0.0 s after waking: 690.0 m off the road
-RACE on: woken car Rival4 went wrong 0.0 s after waking: 82.5 m off the road
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 151.3 m off the road
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 198.2 m off the road
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 85.0 m off the road
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 531.4 m off the road
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 519.6 m off the road
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 612.2 m off the road
-RACE on: woken car Rival4 went wrong 0.0 s after waking: 483.8 m off the road
-RACE on: woken car Rival5 went wrong 0.0 s after waking: 257.6 m off the road
-RACE on: woken car Rival3 went wrong 0.0 s after waking: 280.8 m off the road
-RACE on: woken car Rival2 went wrong 0.0 s after waking: 504.7 m off the road
-RACE on: 307.0 s, 36842 ticks: physics tick 3066 us (whole engine, headless), cars' physics 1176 us per tick, rails 35% of rival ticks, 39 sleeps, 38 wakes (30 went wrong), rescues 0, flips 0, places gained on track 45, attack 5109 / draft 2069 / defend 107 decisions
-RACE on: classification 1 Aoi Fujimura 4:29.535 | 2 Ren Takeda 4:30.673 | 3 Kenji Hayashi 4:34.828 | 4 Mei Sakamoto 4:38.718 | 5 Daichi Ono 4:46.181 | 6 You 4:46.765 | 7 Hana Kobayashi 5:05.926
+RACE on: 307.2 s, 36862 ticks: physics tick 2414 us (whole engine, headless), cars' physics 918 us per tick, rails 34% of rival ticks, 49 sleeps, 48 wakes (0 went wrong), rescues 0, flips 0, places gained on track 215, attack 5421 / draft 1902 / defend 153 decisions
+RACE on: classification 1 Aoi Fujimura 4:32.210 | 2 Kenji Hayashi 4:36.114 | 3 Ren Takeda 4:36.567 | 4 Mei Sakamoto 4:40.647 | 5 Daichi Ono 4:47.356 | 6 You 4:47.939 | 7 Hana Kobayashi 5:06.092
 CHECK ok    race on: every rival finished (6/6)
-CHECK FAIL  race on: every car woken from rails drove on (30 of 38 went wrong)
-CHECK ok    race on: rivals went on rails and came back (39 sleeps, 38 wakes)
-RACE compare: physics tick 3816 -> 3066 us (-20%), cars' physics 1666 -> 1176 us per tick (-29%), rails 35% of rival ticks
-CHECK ok    rails: the cars' physics costs less per tick (1176 vs 1666 us)
+CHECK ok    race on: every car woken from rails drove on (0 of 48 went wrong)
+CHECK ok    race on: rivals went on rails and came back (49 sleeps, 48 wakes)
+RACE compare: physics tick 2915 -> 2414 us (-17%), cars' physics 1276 -> 918 us per tick (-28%), rails 34% of rival ticks
+CHECK ok    rails: the cars' physics costs less per tick (918 vs 1276 us)
 CHECK ok    rails: no more flips than without (0 vs 0)
-SUMMARY race_check: 18 checks, 1 failed
-FAIL race on: every car woken from rails drove on (30 of 38 went wrong)
+SUMMARY race_check: 18 checks, 0 failed
 ERROR: 7 resources still in use at exit (run with --verbose for details).

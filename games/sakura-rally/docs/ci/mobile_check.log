@@ -1,50 +1,50 @@
 Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
 
-[   2.0s] CHECK ok   Mobile autoload in touch mode
-[   2.0s] CHECK ok   touch controls created
-[   6.0s] CHECK ok   touch controls hidden on the title hub
-[   6.0s] CHECK ok   Back on the title hub would quit (handler sees the hub)
-[   6.0s] CHECK ok   keyboard hint strip hidden on touch screens
-[   6.0s] TAP @Button@258 at (9.154271, 54.34672)
-[   7.5s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
-[   9.0s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
-[  15.6s] CHECK ok   free roam reached
-[  15.6s] CHECK ok   touch controls shown while driving
-[  15.6s] CHECK ok   HUD tachometer moved to the bottom centre
-[  15.6s] CHECK ok   player car exists
-[  15.8s] CHECK ok   GAS touch presses throttle
-[  18.6s] CHECK ok   car accelerates under touch throttle (88 km/h)
-[  18.8s] CHECK ok   ▶ touch presses steer_right
-[  20.0s] CHECK ok   car turns while ▶ is held (yaw 30.1°)
-[  20.1s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
-[  20.3s] CHECK ok   sliding GAS → BRAKE swaps the pedals
-[  21.4s] CHECK ok   lifting every finger releases every action
-[  21.7s] CHECK ok   multi-touch: GAS + HANDBRAKE together
-[  21.8s] CHECK ok   camera button cycles chase -> chase_far
-[  22.3s] CHECK ok   pause button pauses
-[  22.3s] CHECK ok   touch controls hidden while paused
-[  22.8s] CHECK ok   Back on the pause menu resumes (resume)
-[  23.5s] CHECK ok   Back while driving pauses (pause)
-[  24.0s] CHECK ok   Back again resumes
-[  24.5s] CHECK ok   background: drive paused, controls released
-[  24.8s] CHECK ok   performance lab created
-[  24.8s] CHECK ok   perf meter hidden by default off-phone (clean screenshots)
-[  26.3s] CHECK ok   perf meter shows fps, CPU and GPU time (145 fps  6.9 ms (worst 7)  ·  limit: CPU? (no GPU timer) | CPU 1.2 ms  [game logic 0.4 · physics 0.82×1 · render 0.0]   GPU 0.0 ms | physics tick 0.82 ms = scripts 0.16 + 1 cars 0.26 + Jolt 0.40 | 3D 48×48 (75%) · ? Hz · 0 draws · 0k tris · Low | shadow passes: 0 draws · 0k tris · hidden-object culling on · ink fast)
-[  26.3s] physics catch-up limit: 12 steps per frame
-[  26.3s] TAP PerfMeter at (51.46667, 3.233334)
-[  26.8s] CHECK ok   tapping the meter pauses and opens the lab
-[  26.8s] TAP Lab_scale at (56.4, 26.93333)
-[  26.8s] TAP Lab_scale at (56.4, 26.93333)
-[  26.9s] CHECK ok   lab: 3D resolution 85% (scale 0.85)
-[  26.9s] TAP Lab_ink at (56.4, 29.13334)
-[  26.9s] TAP Lab_shadows at (43.46667, 29.13334)
-[  27.0s] CHECK ok   lab: ink lines off
-[  27.0s] CHECK ok   lab: sun shadows off
-[  27.0s] TAP Lab_cap at (43.46667, 26.93333)
-[  27.0s] CHECK ok   lab: frame-rate cap 120 (max_fps 120)
-[  27.0s] CHECK ok   lab: report copied
-[  27.0s] CHECK ok   lab: switches restore the normal look (scale 0.75)
-[  31.2s] profile:
+[   1.3s] CHECK ok   Mobile autoload in touch mode
+[   1.3s] CHECK ok   touch controls created
+[   4.9s] CHECK ok   touch controls hidden on the title hub
+[   4.9s] CHECK ok   Back on the title hub would quit (handler sees the hub)
+[   4.9s] CHECK ok   keyboard hint strip hidden on touch screens
+[   4.9s] TAP @Button@258 at (9.160989, 54.37082)
+[   6.5s] CHECK ok   tapping Time Attack opens its page (view=time_attack)
+[   8.0s] CHECK ok   Back from Time Attack returns to the hub (cancel, view=title)
+[  14.6s] CHECK ok   free roam reached
+[  14.6s] CHECK ok   touch controls shown while driving
+[  14.6s] CHECK ok   HUD tachometer moved to the bottom centre
+[  14.6s] CHECK ok   player car exists
+[  14.8s] CHECK ok   GAS touch presses throttle
+[  17.6s] CHECK ok   car accelerates under touch throttle (87 km/h)
+[  17.7s] CHECK ok   ▶ touch presses steer_right
+[  18.9s] CHECK ok   car turns while ▶ is held (yaw 28.9°)
+[  19.1s] CHECK ok   sliding the finger to ◀ swaps steer_right for steer_left
+[  19.2s] CHECK ok   sliding GAS → BRAKE swaps the pedals
+[  20.4s] CHECK ok   lifting every finger releases every action
+[  20.7s] CHECK ok   multi-touch: GAS + HANDBRAKE together
+[  20.7s] CHECK ok   camera button cycles chase -> chase_far
+[  21.3s] CHECK ok   pause button pauses
+[  21.3s] CHECK ok   touch controls hidden while paused
+[  21.8s] CHECK ok   Back on the pause menu resumes (resume)
+[  22.5s] CHECK ok   Back while driving pauses (pause)
+[  23.0s] CHECK ok   Back again resumes
+[  23.5s] CHECK ok   background: drive paused, controls released
+[  23.8s] CHECK ok   performance lab created
+[  23.8s] CHECK ok   perf meter hidden by default off-phone (clean screenshots)
+[  25.3s] CHECK ok   perf meter shows fps, CPU and GPU time (145 fps  6.9 ms (worst 7)  ·  limit: CPU? (no GPU timer) | CPU 1.0 ms  [game logic 0.4 · physics 0.61×1 · render 0.0]   GPU 0.0 ms | physics tick 0.61 ms = scripts 0.14 + 1 cars 0.24 + Jolt 0.23 | 3D 48×48 (75%) · ? Hz · 0 draws · 0k tris · Low | shadow passes: 0 draws · 0k tris · hidden-object culling on · ink fast)
+[  25.3s] physics catch-up limit: 12 steps per frame
+[  25.3s] TAP PerfMeter at (51.46667, 3.233334)
+[  25.7s] CHECK ok   tapping the meter pauses and opens the lab
+[  25.7s] TAP Lab_scale at (56.4, 26.93333)
+[  25.8s] TAP Lab_scale at (56.4, 26.93333)
+[  25.8s] CHECK ok   lab: 3D resolution 85% (scale 0.85)
+[  25.8s] TAP Lab_ink at (56.4, 29.13334)
+[  25.9s] TAP Lab_shadows at (43.46667, 29.13334)
+[  25.9s] CHECK ok   lab: ink lines off
+[  25.9s] CHECK ok   lab: sun shadows off
+[  25.9s] TAP Lab_cap at (43.46667, 26.93333)
+[  25.9s] CHECK ok   lab: frame-rate cap 120 (max_fps 120)
+[  25.9s] CHECK ok   lab: report copied
+[  26.0s] CHECK ok   lab: switches restore the normal look (scale 0.75)
+[  30.2s] profile:
 Sakura Rally GPU profile
 device: GenericDevice |  | forward_plus 
 screen: 64x64 @ -1 Hz | quality low | 3D scale 0.75
@@ -63,74 +63,99 @@ Clouds/petals off          145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 d
 HUD + touch buttons off    145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws     0k tris | shadows    0 draws     0k tris
 Hidden-object culling off  145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws     0k tris | shadows    0 draws     0k tris
 Whole 3D world off         145.0 fps  GPU   0.00 ms  render-CPU  0.00 ms     0 draws     0k tris | shadows    0 draws     0k tris
-[  31.2s] CHECK ok   GPU profile ran all 15 steps (15)
-[  31.2s] CHECK ok   GPU profile puts everything back (scale 0.75, mask 1048575)
-[  31.2s] CHECK ok   GPU profile shows its table in the lab
-[  31.5s] CHECK ok   phone tuning on High: MSAA 2x, tighter first cascade (msaa 1, split 0.065, dist 320.05)
-[  31.6s] CHECK ok   phone tuning follows the switch back to Low (split 0.100, dist 160.05)
-[  31.6s] CHECK ok   phone tuning: mesh LOD threshold = one rendered pixel (1.33 at 75%)
-[  31.6s] CHECK ok   LOD threshold: 1 px at 100%, 2 px at 50%
-[  31.6s] meter: 145 fps  6.9 ms (worst 7)  ·  limit: CPU? (no GPU timer)
-CPU 1.3 ms  [game logic 0.4 · physics 0.91×1 · render 0.0]   GPU 0.0 ms
-physics tick 0.91 ms = scripts 0.16 + 1 cars 0.26 + Jolt 0.49
+[  30.2s] CHECK ok   GPU profile ran all 15 steps (15)
+[  30.2s] CHECK ok   GPU profile puts everything back (scale 0.75, mask 1048575)
+[  30.2s] CHECK ok   GPU profile shows its table in the lab
+[  30.5s] CHECK ok   phone tuning on High: MSAA 2x, tighter first cascade (msaa 1, split 0.065, dist 320.05)
+[  30.5s] CHECK ok   phone tuning follows the switch back to Low (split 0.100, dist 160.05)
+[  30.5s] CHECK ok   phone tuning: mesh LOD threshold = one rendered pixel (1.33 at 75%)
+[  30.5s] CHECK ok   LOD threshold: 1 px at 100%, 2 px at 50%
+[  30.5s] meter: 145 fps  6.9 ms (worst 7)  ·  limit: CPU? (no GPU timer)
+CPU 1.1 ms  [game logic 0.4 · physics 0.71×1 · render 0.0]   GPU 0.0 ms
+physics tick 0.71 ms = scripts 0.14 + 1 cars 0.25 + Jolt 0.32
 3D 48×48 (75%) · ? Hz · 0 draws · 0k tris · Low
 shadow passes: 0 draws · 0k tris · hidden-object culling on · ink fast
-[  31.6s] CHECK ok   meter splits the physics tick (cars 1, tick 0.91, scripts 0.16, cars 0.26 ms)
-[  31.6s] CHECK ok   auto resolution steps down when the GPU is over budget (0.57)
-[  31.6s] CHECK ok   auto resolution steps back up with headroom
-[  31.6s] CHECK ok   auto resolution holds inside the comfort band
-[  31.6s] CHECK ok   auto resolution never goes below its floor
-[  32.0s] CHECK ok   lab closed, drive resumed
-[  32.0s] CHECK ok   manual gearbox shows ▲ ▼
-[  34.3s] CHECK ok   ▲ shifts up (gear 1 -> 2)
-[  46.4s] CHECK ok   time trial racing with touch controls
-[  49.5s] CENSUS q=high   main    0 draws     0k tris | shadows    0 draws     0k tris
-[  49.6s] CENSUS q=medium main    0 draws     0k tris | shadows    0 draws     0k tris
-[  49.6s] CENSUS q=low    main    0 draws     0k tris | shadows    0 draws     0k tris
-[  49.7s] CENSUS inventory, High, camera (-1.0, 21.0, 334.0), shadow distance 320 m
-[  49.7s] CENSUS shadow caster prop cedar_b                          5860k tris in  223 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop cedar_a                          5027k tris in  228 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop pine_a                           1499k tris in  190 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop maple_red                        1362k tris in   96 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop fern                             1291k tris in   78 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop maple_orange                     1263k tris in   97 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop maple_green                      1244k tris in   89 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop maple_yellow                     1161k tris in   96 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop pine_b                            662k tris in  146 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop sakura_a                          607k tris in   41 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop sakura_c                          449k tris in   39 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop reeds                             403k tris in   48 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop bamboo_clump                      391k tris in   15 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop sakura_b                          317k tris in   29 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop azalea                            284k tris in   34 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop bush_a                            173k tris in   58 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop bush_b                            122k tris in   54 objects (nearest  335 m)
-[  49.7s] CENSUS shadow caster prop banner_fence                      112k tris in    8 objects (nearest  335 m)
-[  49.7s] CENSUS main object   prop cedar_b                          5860k tris in  223 objects (nearest  335 m)
-[  49.7s] CENSUS main object   prop cedar_a                          5027k tris in  228 objects (nearest  335 m)
-[  49.7s] CENSUS main object   prop pine_a                           1499k tris in  190 objects (nearest  335 m)
-[  49.7s] CENSUS main object   prop maple_red                        1362k tris in   96 objects (nearest  335 m)
-[  49.7s] CENSUS main object   prop maple_orange                     1263k tris in   97 objects (nearest  335 m)
-[  49.7s] CENSUS main object   prop maple_green                      1244k tris in   89 objects (nearest  335 m)
-[  49.7s] CENSUS main object   prop maple_yellow                     1161k tris in   96 objects (nearest  335 m)
-[  49.7s] CENSUS main object   prop pine_b                            662k tris in  146 objects (nearest  335 m)
-[  49.7s] CENSUS main object   prop sakura_a                          607k tris in   41 objects (nearest  335 m)
-[  49.7s] CENSUS main object   prop sakura_c                          449k tris in   39 objects (nearest  335 m)
-[  49.7s] CENSUS main object   prop bamboo_clump                      391k tris in   15 objects (nearest  335 m)
-[  49.7s] CENSUS main object   prop sakura_b                          317k tris in   29 objects (nearest  335 m)
-[  49.7s] CENSUS main object   terrain near                           280k tris in   75 objects (nearest    0 m)
-[  49.7s] CENSUS main object   prop banner_fence                      112k tris in    8 objects (nearest  335 m)
-[  49.7s] CENSUS main object   prop lantern_string                     76k tris in    8 objects (nearest  335 m)
-[  49.7s] CENSUS main object   prop stone_wall                         63k tris in    6 objects (nearest  335 m)
-[  49.7s] CENSUS main object   Road/road_hanami                        59k tris in   20 objects (nearest    0 m)
-[  49.7s] CENSUS main object   terrain far                             51k tris in   93 objects (nearest    0 m)
-[  49.7s] CHECK ok   load census logged
-[  55.3s] CHECK ok   race: the race director joined the race
-[  55.3s] CHECK ok   race: six rivals racing with race_bot_plus.gd (6/6)
-[  81.9s] RACE 24 s: most rivals on rails at once 0, sleeps 0, wakes 0, cars' physics 1.64 ms per tick (mean of the meter), meter: 145 fps  6.9 ms (worst 7)  ·  limit: CPU? (no GPU timer) | CPU 6.0 ms  [game logic 0.9 · physics 5.13×1 · render 0.0]   GPU 0.0 ms | physics tick 5.13 ms = scripts 1.05 + 7 cars 1.67 + Jolt 2.42  ·  0 on rails | 3D 48×48 (75%) · ? Hz · 0 draws · 0k tris · Low | shadow passes: 0 draws · 0k tris · hidden-object culling on · ink fast
-[  81.9s] CHECK ok   race: the perf meter counts the rivals on rails
-[  81.9s] CHECK ok   race: seven cars classified (7)
-[  84.6s] CHECK ok   controls hidden again on the menu
-[  85.6s] TAP @Button@244 at (10.30418, 50.73238)
-[  87.3s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
-[  90.3s] SUMMARY: 0 failures
+[  30.5s] CHECK ok   meter splits the physics tick (cars 1, tick 0.71, scripts 0.14, cars 0.25 ms)
+[  30.5s] CHECK ok   auto resolution steps down when the GPU is over budget (0.57)
+[  30.5s] CHECK ok   auto resolution steps back up with headroom
+[  30.5s] CHECK ok   auto resolution holds inside the comfort band
+[  30.5s] CHECK ok   auto resolution never goes below its floor
+[  30.9s] CHECK ok   lab closed, drive resumed
+[  30.9s] CHECK ok   manual gearbox shows ▲ ▼
+[  33.3s] CHECK ok   ▲ shifts up (gear 1 -> 2)
+[  45.4s] CHECK ok   time trial racing with touch controls
+[  48.5s] CENSUS q=high   main    0 draws     0k tris | shadows    0 draws     0k tris
+[  48.5s] CENSUS q=medium main    0 draws     0k tris | shadows    0 draws     0k tris
+[  48.6s] CENSUS q=low    main    0 draws     0k tris | shadows    0 draws     0k tris
+[  48.6s] CENSUS inventory, High, camera (-1.0, 21.0, 334.0), shadow distance 320 m
+[  48.7s] CENSUS shadow caster prop cedar_b                          5860k tris in  223 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop cedar_a                          5027k tris in  228 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop pine_a                           1499k tris in  190 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop maple_red                        1362k tris in   96 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop fern                             1291k tris in   78 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop maple_orange                     1263k tris in   97 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop maple_green                      1244k tris in   89 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop maple_yellow                     1161k tris in   96 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop pine_b                            662k tris in  146 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop sakura_a                          607k tris in   41 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop sakura_c                          449k tris in   39 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop reeds                             403k tris in   48 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop bamboo_clump                      391k tris in   15 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop sakura_b                          317k tris in   29 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop azalea                            284k tris in   34 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop bush_a                            173k tris in   58 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop bush_b                            122k tris in   54 objects (nearest  335 m)
+[  48.7s] CENSUS shadow caster prop banner_fence                      112k tris in    8 objects (nearest  335 m)
+[  48.7s] CENSUS main object   prop cedar_b                          5860k tris in  223 objects (nearest  335 m)
+[  48.7s] CENSUS main object   prop cedar_a                          5027k tris in  228 objects (nearest  335 m)
+[  48.7s] CENSUS main object   prop pine_a                           1499k tris in  190 objects (nearest  335 m)
+[  48.7s] CENSUS main object   prop maple_red                        1362k tris in   96 objects (nearest  335 m)
+[  48.7s] CENSUS main object   prop maple_orange                     1263k tris in   97 objects (nearest  335 m)
+[  48.7s] CENSUS main object   prop maple_green                      1244k tris in   89 objects (nearest  335 m)
+[  48.7s] CENSUS main object   prop maple_yellow                     1161k tris in   96 objects (nearest  335 m)
+[  48.7s] CENSUS main object   prop pine_b                            662k tris in  146 objects (nearest  335 m)
+[  48.7s] CENSUS main object   prop sakura_a                          607k tris in   41 objects (nearest  335 m)
+[  48.7s] CENSUS main object   prop sakura_c                          449k tris in   39 objects (nearest  335 m)
+[  48.7s] CENSUS main object   prop bamboo_clump                      391k tris in   15 objects (nearest  335 m)
+[  48.7s] CENSUS main object   prop sakura_b                          317k tris in   29 objects (nearest  335 m)
+[  48.7s] CENSUS main object   terrain near                           280k tris in   75 objects (nearest    0 m)
+[  48.7s] CENSUS main object   prop banner_fence                      112k tris in    8 objects (nearest  335 m)
+[  48.7s] CENSUS main object   prop lantern_string                     76k tris in    8 objects (nearest  335 m)
+[  48.7s] CENSUS main object   prop stone_wall                         63k tris in    6 objects (nearest  335 m)
+[  48.7s] CENSUS main object   Road/road_hanami                        59k tris in   20 objects (nearest    0 m)
+[  48.7s] CENSUS main object   terrain far                             51k tris in   93 objects (nearest    0 m)
+[  48.7s] CHECK ok   load census logged
+[  51.4s] CHECK ok   controls hidden again on the menu
+[  56.1s] CHECK ok   race: the race director joined the race
+[  56.1s] CHECK ok   race: six rivals racing with race_bot_plus.gd (6/6)
+[  59.5s] RACE t= 1 state=RACING camera ChaseCamera (Camera3D) at (-163.0, 19.0, 338.0), fov 72
+[  60.5s] RACE t= 2 state=RACING camera ChaseCamera (Camera3D) at (-149.0, 19.0, 338.0), fov 73
+[  61.5s] RACE t= 3 state=RACING camera ChaseCamera (Camera3D) at (-135.0, 19.0, 339.0), fov 72
+[  62.5s] RACE t= 4 state=RACING camera ChaseCamera (Camera3D) at (-125.0, 19.0, 339.0), fov 71
+[  63.5s] RACE t= 5 state=RACING camera ChaseCamera (Camera3D) at (-117.0, 19.0, 338.0), fov 71
+[  64.5s] RACE t= 6 state=RACING camera ChaseCamera (Camera3D) at (-111.0, 19.0, 338.0), fov 71
+[  65.5s] RACE t= 7 state=RACING camera ChaseCamera (Camera3D) at (-98.0, 19.0, 337.0), fov 74
+[  66.5s] RACE t= 8 state=RACING camera ChaseCamera (Camera3D) at (-76.0, 20.0, 335.0), fov 76
+[  67.5s] RACE t= 9 state=RACING camera ChaseCamera (Camera3D) at (-49.0, 20.0, 332.0), fov 79
+[  68.5s] RACE t=10 state=RACING camera ChaseCamera (Camera3D) at (-18.0, 21.0, 327.0), fov 80
+[  69.6s] RACE t=11 state=RACING camera ChaseCamera (Camera3D) at (18.0, 21.0, 319.0), fov 81
+[  70.6s] RACE t=12 state=RACING camera ChaseCamera (Camera3D) at (54.0, 22.0, 308.0), fov 81
+[  71.6s] RACE t=13 state=RACING camera ChaseCamera (Camera3D) at (85.0, 24.0, 295.0), fov 79
+[  72.6s] RACE t=14 state=RACING camera ChaseCamera (Camera3D) at (111.0, 25.0, 280.0), fov 78
+[  73.6s] RACE t=15 state=RACING camera ChaseCamera (Camera3D) at (133.0, 26.0, 264.0), fov 77
+[  74.6s] RACE t=16 state=RACING camera ChaseCamera (Camera3D) at (152.0, 27.0, 248.0), fov 76
+[  75.6s] RACE t=17 state=RACING camera ChaseCamera (Camera3D) at (169.0, 29.0, 230.0), fov 75
+[  76.6s] RACE t=18 state=RACING camera ChaseCamera (Camera3D) at (182.0, 30.0, 213.0), fov 75
+[  77.6s] RACE t=19 state=RACING camera ChaseCamera (Camera3D) at (193.0, 31.0, 195.0), fov 74
+[  78.6s] RACE t=20 state=RACING camera ChaseCamera (Camera3D) at (202.0, 32.0, 176.0), fov 76
+[  79.6s] RACE t=21 state=RACING camera ChaseCamera (Camera3D) at (211.0, 34.0, 150.0), fov 78
+[  80.6s] RACE t=22 state=RACING camera ChaseCamera (Camera3D) at (215.0, 36.0, 121.0), fov 79
+[  81.6s] RACE t=23 state=RACING camera ChaseCamera (Camera3D) at (216.0, 38.0, 88.0), fov 80
+[  82.6s] RACE t=24 state=RACING camera ChaseCamera (Camera3D) at (218.0, 41.0, 56.0), fov 78
+[  82.6s] RACE 24 s: most rivals on rails at once 0, sleeps 0, wakes 0, cars' physics 1.29 ms per tick (mean of the meter), meter: 145 fps  6.9 ms (worst 7)  ·  limit: CPU? (no GPU timer) | CPU 3.8 ms  [game logic 0.7 · physics 3.03×1 · render 0.0]   GPU 0.0 ms | physics tick 3.03 ms = scripts 0.83 + 7 cars 1.32 + Jolt 0.88  ·  0 on rails | 3D 48×48 (75%) · ? Hz · 0 draws · 0k tris · Low | shadow passes: 0 draws · 0k tris · hidden-object culling on · ink fast
+[  82.6s] CHECK ok   race: the perf meter counts the rivals on rails
+[  82.6s] CHECK ok   race: seven cars classified (7)
+[  82.6s] CHECK ok   race: camera and cars never NaN 
+[  86.3s] TAP @Button@244 at (10.2895, 50.70592)
+[  88.1s] CHECK ok   tapping New journey starts the campaign (state=INTRO)
+[  91.1s] SUMMARY: 0 failures
