@@ -182,6 +182,9 @@ func _run() -> void:
 	_check(int(game.state) == int(game.State.RACING) and bool(controls.active), "time trial racing with touch controls")
 	await _census_checks()
 
+	# ------------------------------------------------------------ race mode
+	await _race_checks()
+
 	# ------------------------------------------------------------ back to the menu
 	game.request_menu()
 	await _until(func() -> bool: return int(game.state) == int(game.State.MENU), 60.0)
@@ -370,6 +373,70 @@ func _census_checks() -> void:
 	Input.action_release(&"handbrake")
 	game.set_setting("quality", "low")
 	await _frames(3)
+
+
+## Race mode (mobile/race): the director joins the race, every rival races with
+## race_bot_plus.gd, the grid with six rivals (shot), then 24 s of racing with a RaceBot on the
+## player's car: the cars' physics per tick and how many rivals are on rails (the perf meter
+## shows it), and a shot of the pack.
+func _race_checks() -> void:
+	game.request_start(opts["map"], game.MODE_RACE)
+	await _until(func() -> bool: return main.race != null and _on_grid(), 90.0)
+	await _seconds(0.6)
+	var race: Node = main.race
+	var rivals: Array = main.rivals
+	var director := race.get_node_or_null(^"RaceDirector") if race != null else null
+	var plus := 0
+	for r: Node in rivals:
+		var bot := r.get_node_or_null(^"RaceBot")
+		plus += int(bot != null and str(bot.get_script().resource_path).ends_with("race_bot_plus.gd"))
+	_check(director != null, "race: the race director joined the race")
+	_check(rivals.size() == 6 and plus == rivals.size(), "race: six rivals racing with race_bot_plus.gd (%d/%d)" % [plus, rivals.size()])
+	await shot("08_race_grid")
+	var car: Car = game.player_car
+	var driver := RaceBot.new()
+	driver.name = "RaceBot"
+	driver.track = main.map.track
+	driver.pace = 0.95
+	driver.field = (rivals[0].get_node(^"RaceBot") as RaceBot).field if not rivals.is_empty() else []
+	driver.phase = 11
+	car.controlled_by_player = false
+	car.add_child(driver)
+	game.set(&"ai_drove", true)
+	await _until(func() -> bool: return int(game.state) == int(game.State.RACING), 30.0)
+	var perf: Node = mobile.get("perf")
+	if perf != null:
+		perf.meter_on = true
+	var most_asleep := 0
+	var car_ms := 0.0
+	var n := 0
+	var t_end: float = 24.0
+	var t := 0.0
+	while t < t_end:
+		await _seconds(1.0)
+		t += 1.0
+		if director != null and is_instance_valid(director):
+			most_asleep = maxi(most_asleep, int(director.call(&"asleep_count")))
+		if perf != null:
+			var st: Dictionary = perf.stats
+			car_ms += float(st.get("car_ms", 0.0))
+			n += 1
+		if t == 12.0:
+			await shot("09_race_pack")
+	var meter := str(perf._meter.text).replace("\n", " | ") if perf != null else ""
+	_log("RACE %d s: most rivals on rails at once %d, sleeps %d, wakes %d, cars' physics %.2f ms per tick (mean of the meter), meter: %s" % [
+			int(t_end), most_asleep, int(director.get(&"sleeps")) if director != null else -1,
+			int(director.get(&"wakes")) if director != null else -1, car_ms / maxf(n, 1.0), meter])
+	_check(meter.contains("on rails"), "race: the perf meter counts the rivals on rails")
+	var placed := 0
+	for e: Variant in race.entrants:
+		placed += int(int(e.position) > 0)
+	_check(placed == 7, "race: seven cars classified (%d)" % placed)
+	await shot("10_race_meter")
+	if perf != null:
+		perf.meter_on = false
+	if is_instance_valid(driver):
+		driver.queue_free()
 
 
 ## The two exact-look levers (hidden-object culling, fast ink pass): what each saves on every

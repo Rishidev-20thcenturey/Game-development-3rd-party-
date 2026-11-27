@@ -618,9 +618,16 @@ func _all_cars() -> Array:
 			out.append(car)
 	for g: StringName in [&"race_rival", &"ghost_car"]:
 		for n in get_tree().get_nodes_in_group(g):
-			if n not in out and n.get("step_usec") != null:
+			# a race rival on rails (race_director.gd) is disabled: it costs no physics
+			if n not in out and n.get("step_usec") != null and n.can_process():
 				out.append(n)
 	return out
+
+
+## Race: rivals on rails right now, or -1 outside a race.
+func _rails_count() -> int:
+	var d := get_tree().get_first_node_in_group(&"race_director")
+	return int(d.call(&"asleep_count")) if d != null else -1
 
 
 func _process(delta: float) -> void:
@@ -687,6 +694,7 @@ func _process(delta: float) -> void:
 		"cpu_ms": cpu, "scripts_ms": scripts, "physics_ms": physics, "physics_steps": steps,
 		"render_cpu_ms": render_cpu, "gpu_ms": gpu, "limit": limit,
 		"physics_scripts_ms": cb_ms, "car_ms": car_ms, "cars": _stamp.cars.size(), "jolt_ms": maxf(physics - cb_ms - car_ms, 0.0),
+		"rails": _rails_count(),
 		"draw_calls": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
 		"triangles": int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)),
 		"shadow_draws": RenderingServer.viewport_get_render_info(_vp_rid, RenderingServer.VIEWPORT_RENDER_INFO_TYPE_SHADOW, RenderingServer.VIEWPORT_RENDER_INFO_DRAW_CALLS_IN_FRAME),
@@ -706,10 +714,11 @@ func _meter_text() -> String:
 	var w: Vector2i = s["window"]
 	var sc: float = s["scale_3d"]
 	var hz: float = s["refresh_hz"]
-	return "%d fps  %.1f ms (worst %.0f)  ·  limit: %s\nCPU %.1f ms  [game logic %.1f · physics %.2f×%.0f · render %.1f]   GPU %.1f ms\nphysics tick %.2f ms = scripts %.2f + %d cars %.2f + Jolt %.2f\n3D %d×%d (%s) · %s Hz · %d draws · %dk tris · %s\nshadow passes: %d draws · %dk tris · hidden-object culling %s · ink %s" % [
+	return "%d fps  %.1f ms (worst %.0f)  ·  limit: %s\nCPU %.1f ms  [game logic %.1f · physics %.2f×%.0f · render %.1f]   GPU %.1f ms\nphysics tick %.2f ms = scripts %.2f + %d cars %.2f + Jolt %.2f%s\n3D %d×%d (%s) · %s Hz · %d draws · %dk tris · %s\nshadow passes: %d draws · %dk tris · hidden-object culling %s · ink %s" % [
 		roundi(s["fps"]), s["frame_ms"], s["worst_ms"], s["limit"],
 		s["cpu_ms"], s["scripts_ms"], s["physics_ms"], s["physics_steps"], s["render_cpu_ms"], s["gpu_ms"],
 		s["physics_ms"], s["physics_scripts_ms"], s["cars"], s["car_ms"], s["jolt_ms"],
+		("  ·  %d on rails" % int(s.get("rails", -1))) if int(s.get("rails", -1)) >= 0 else "",
 		roundi(w.x * sc), roundi(w.y * sc), ("%d%% auto" % roundi(sc * 100.0)) if drs_active() else ("%d%%" % roundi(sc * 100.0)), ("%d" % roundi(hz)) if hz > 0.0 else "?",
 		s["draw_calls"], roundi(s["triangles"] / 1000.0), str(s["quality"]).capitalize(), s["shadow_draws"], roundi(s["shadow_triangles"] / 1000.0),
 		("on" if occlusion_on and occluder_tris > 0 else "off"), ("fast" if ink_fast else "original")]

@@ -11,13 +11,15 @@ extends Node
 ##   * maps the Android Back button onto the game's own flow: pause while driving, back out
 ##     of menus, resume from pause, and quit from the title hub;
 ##   * pauses a drive and releases every held control when the app goes to the background;
-##   * shows a performance meter (tap it for the performance lab, perf_lab.gd).
+##   * shows a performance meter (tap it for the performance lab, perf_lab.gd);
+##   * on every platform, adds the race director (race/race_director.gd) to each race.
 ## Upstream scripts are not modified. Everything here goes through the public Game API, the
 ## InputMap actions and ui_cancel, the same paths the keyboard and gamepad already use.
 
 const TouchControls := preload("res://mobile/touch_controls.gd")
 const PerfLab := preload("res://mobile/perf_lab.gd")
 const KeyHints := preload("res://scripts/ui/widgets/key_hints.gd")
+const RaceDirector := preload("res://mobile/race/race_director.gd")
 
 ## Tachometer scale on touch screens (the desktop gauge is 400 px).
 const TACH_SCALE := 0.62
@@ -42,6 +44,8 @@ func _ready() -> void:
 	if OS.has_feature("mobile"):
 		get_tree().quit_on_go_back = false
 		_first_run_defaults()
+	# Race mode on every platform of this build: the director (race_director.gd) joins each race.
+	get_tree().node_added.connect(_on_race_node)
 	if not touch_enabled:
 		return
 	controls = TouchControls.new()
@@ -59,6 +63,13 @@ func _on_node_added(node: Node) -> void:
 		var c := node as Control
 		_hints.append(c)
 		c.self_modulate.a = 1.0 if _gamepad_seen else 0.0
+
+
+func _on_race_node(node: Node) -> void:
+	if node is RaceField and not node.has_node(^"RaceDirector"):
+		var director := RaceDirector.new()
+		director.name = "RaceDirector"
+		node.add_child.call_deferred(director)
 
 
 func _input(event: InputEvent) -> void:

@@ -3,8 +3,9 @@
 
     python3 games/sakura-rally/prepare.py <path-to-upstream-checkout>
 
-It does not touch any upstream script. It only:
-  * copies mobile/ (autoload, touch controls, CI check) and the launcher icons into res://mobile/;
+It changes one line of one upstream script (PATCHES below) and otherwise only:
+  * copies mobile/ (autoload, touch controls, race layer, CI checks) and the launcher icons into
+    res://mobile/;
   * adds the `Mobile` autoload and the Android-specific project settings to project.godot. Each
     one is a platform override (`.mobile`), so desktop builds of the same tree are unchanged;
   * writes export_presets.cfg with the version and package from build.env.
@@ -36,6 +37,26 @@ SETTINGS = [
     ("rendering", "anti_aliasing/quality/msaa_3d.mobile", "0"),
     ("rendering", "textures/default_filters/anisotropic_filtering_level.mobile", "2"),
 ]
+
+# (file, exact upstream text, replacement). Each must match exactly once, or the build stops.
+PATCHES = [
+    # Race mode: the rivals race with race_bot_plus.gd (a RaceBot subclass: attack, slipstream,
+    # defence, the player-relative pace, the batched network). See docs/RACE.md.
+    ("scripts/main.gd",
+     "\t\tvar bot := RaceBot.new()\n",
+     '\t\tvar bot: RaceBot = (load("res://mobile/race/race_bot_plus.gd") as GDScript).new()\n'),
+]
+
+
+def apply_patches(proj: Path) -> None:
+    for rel, old, new in PATCHES:
+        f = proj / rel
+        text = f.read_text()
+        n = text.count(old)
+        if n != 1:
+            raise SystemExit(f"error: patch for {rel} matches {n} times (expected 1): {old.strip()!r}")
+        f.write_text(text.replace(old, new))
+        print(f"patched {rel}: {old.strip()!r} -> {new.strip()!r}")
 
 
 def read_env() -> dict[str, str]:
@@ -89,6 +110,8 @@ def main() -> int:
     shutil.copytree(HERE / "android" / "icons", dst / "icons")
     # Keep the CI-only script out of the editor's export by name; it also lives under mobile/ci.
     print(f"copied mobile layer -> {dst}")
+
+    apply_patches(proj)
 
     text = pg.read_text()
     for section, key, value in SETTINGS:

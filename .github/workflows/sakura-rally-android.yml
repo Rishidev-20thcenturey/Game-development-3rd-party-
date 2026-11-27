@@ -24,7 +24,7 @@ concurrency:
 jobs:
   apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 150
     env:
       PROJ: ${{ github.workspace }}/build/sakura-rally
       OUT: ${{ github.workspace }}/out
@@ -107,6 +107,21 @@ jobs:
             echo "::error::script errors during import"; exit 1
           fi
 
+      - name: Compile check (mobile layer scripts)
+        run: |
+          fail=0
+          for f in $(cd "$PROJ" && find mobile -name '*.gd' | sort); do
+            if ! out=$(timeout 180 godot --headless --path "$PROJ" --check-only -s "res://$f" 2>&1) \
+                || echo "$out" | grep -qE "Parse Error|Compile Error"; then
+              echo "::error title=compile $f::$(echo "$out" | grep -E 'ERROR|Error|error' | head -5 | tr '\n' ' ')"
+              echo "$out" | tail -20
+              fail=1
+            else
+              echo "ok  $f"
+            fi
+          done
+          exit $fail
+
       - name: Touch layer check (headless)
         continue-on-error: true
         run: |
@@ -120,6 +135,18 @@ jobs:
           set -o pipefail
           timeout 1200 godot --headless --disable-crash-handler --path "$PROJ" \
             -s res://tools/game/flows.gd -- --touch map=hanami speed=3 2>&1 | tee flows.log | grep -E "CHECK|SUMMARY|FAIL|TIMEOUT" | tail -80
+
+      - name: Race mode checks (headless)
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          timeout 1200 godot --headless --disable-crash-handler --fixed-fps 60 --audio-driver Dummy --path "$PROJ" \
+            -s res://mobile/ci/race_check.gd -- map=hanami 2>&1 | tee race_check.log | grep -E "CHECK|SUMMARY|RACE|POLICY|FAIL|TIMEOUT" || true
+          for b in upstream plus; do
+            timeout 900 godot --headless --disable-crash-handler --fixed-fps 120 --audio-driver Dummy --path "$PROJ" \
+              -s res://mobile/ci/race_battle.gd -- route=hanami runs=1 bot=$b 2>&1 | tee "race_battle_$b.log" \
+              | grep -E "^(RACE|SUMMARY|COST)" || true
+          done
 
       - name: Rendered previews (Mobile renderer, software Vulkan)
         continue-on-error: true
@@ -135,7 +162,7 @@ jobs:
       - name: Report test results as annotations
         if: always()
         run: |
-          for f in mobile_check flows render; do
+          for f in mobile_check flows race_check render; do
             [ -f "$f.log" ] || { echo "::warning title=$f::no log"; continue; }
             ok=$(grep -cE 'CHECK (ok|PASS)' "$f.log" || true); bad=$(grep -c 'CHECK FAIL' "$f.log" || true)
             echo "::notice title=$f::${ok} checks ok, ${bad} failed$(grep -m1 -o 'SUMMARY.*' "$f.log" | sed 's/^/ — /')"
@@ -302,10 +329,15 @@ jobs:
             echo "mobile_check: $(grep -cE 'CHECK (ok|PASS)' mobile_check.log || true) ok, $(grep -c 'CHECK FAIL' mobile_check.log || true) failed"
             echo "upstream_flows: $(grep -cE 'CHECK (ok|PASS)' flows.log || true) ok, $(grep -c 'CHECK FAIL' flows.log || true) failed"
             echo "rendered_check: $(grep -cE 'CHECK (ok|PASS)' render.log || true) ok, $(grep -c 'CHECK FAIL' render.log || true) failed"
+            echo "race_check: $(grep -cE 'CHECK (ok|PASS)' race_check.log || true) ok, $(grep -c 'CHECK FAIL' race_check.log || true) failed"
           } > "$D/build-info.txt"
           cp mobile_check.log "$D/mobile_check.log" 2>/dev/null || true
           for f in import export; do if [ -f $f.log ]; then tail -n 200 $f.log > "$D/${f}_tail.log"; fi; done
-          grep -E "CHECK|SUMMARY|TIMEOUT" flows.log > "$D/flows_summary.log" || true
+          grep -E "CHECK|SUMMARY|TIMEOUT|race" flows.log > "$D/flows_summary.log" || true
+          grep -E "CHECK|SUMMARY|RACE|POLICY|FAIL|TIMEOUT|ERROR" race_check.log > "$D/race_check.log" || true
+          for b in upstream plus; do
+            grep -E "^(RACE|SUMMARY|COST|BOT)|ERROR" "race_battle_$b.log" > "$D/race_battle_$b.log" || true
+          done
           grep -E "CHECK|SUMMARY|SHOT|TIMEOUT|CENSUS|PARITY| fps  GPU" render.log > "$D/render_summary.log" || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
