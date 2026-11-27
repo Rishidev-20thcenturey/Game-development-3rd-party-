@@ -33,9 +33,9 @@ race costs. It does not touch the driving model or the network's weights.
 | Following gap | 2 m + 0.35 s | 2 m + 0.25 s |
 | Lift / brake TTC | 1.5 s / 1.0 s | 1.15 s / 0.8 s |
 | Pass a car slower by | 1.0 m/s, within 40 m | 0.5 m/s, within 50 m |
-| Corner braking with a car close ahead | 4 m/s² | 5 m/s² (brakes later) |
+| Corner braking with a car close ahead | 4 m/s² | 4.5 m/s² (brakes a little later) |
 | Slipstream (car ahead in lane, 5–30 m, > 18 m/s) | — | pace limit +5% |
-| Player close behind (1–22 m) | moves over | covers the player's line once, for up to 3 s; again only after 4 s clear |
+| Player close behind (1–14 m) | moves over | covers the player's line once, for up to 2 s; again only after 4 s clear |
 | Yields to another bot | 0.3 m/s faster | 1.5 m/s faster |
 
 The rules RaceBot uses to avoid collisions stay as they are: it never steers towards a car
@@ -43,13 +43,29 @@ alongside, it makes room for a car alongside, and it keeps its rescue logic.
 
 ### Pace
 
-The campaign pace stays as the minimum. If you have a record on the stage (your time-trial best
-minus 3 s for the standing start, or your best race lap), the field is spread around it. Pole,
-which is the slowest car, targets 1.10 × your lap. The last car on the grid targets 0.97 × your
-lap. A faster player meets faster rivals.
+The field runs at about 80% of the driver's own speed. Pole, the slowest car, runs at 0.75 and the
+last car on the grid, the fastest, at 0.88. The others are spread between, and no rival is ever
+slower than its campaign lap. On Hanami that is a 1:47–2:03 lap; gold is 2:04.5. Before this, the
+campaign paces put the field at 0.60–0.77.
+
+If you have a record on the stage and it asks for more, the field is also set from your own lap.
+Your record is your time-trial best minus 3 s for the standing start, or your best race lap. Pole
+then targets 1.06 × your lap and the fastest car 0.95 ×, a little quicker than you. Each rival
+takes the faster of the two. Nothing runs above 0.95.
 
 The director adds a light catch-up. From 60 m up to 400 m of road ahead of you, a rival eases by
-up to 5%. Behind you, it speeds up by up to 8%, but never beyond pace 1.0.
+up to 5%. Behind you, it speeds up by up to 8%, but never beyond 0.95.
+
+### Steadiness
+
+* **Lane changes.** A new lane target has to be wanted at two decisions in a row (0.2 s) before
+  the car moves for it. A car alongside, or a car to pass within 14 m, still gets an immediate
+  reaction.
+* **Slipstream.** The tow only lifts the pace limit where the car is still accelerating, never
+  into a braking zone.
+* **Braking.** With a car close ahead, corner braking assumes 4.5 m/s² (upstream 4.0), down from
+  the earlier 5.0, so the car doesn't overshoot at the higher pace.
+* **Defending.** It covers the player's line for at most 2 s, and only against a car within 14 m.
 
 ### Rails (`race_director.gd`)
 

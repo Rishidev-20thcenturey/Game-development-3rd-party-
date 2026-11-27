@@ -24,7 +24,7 @@ extends Node
 ##
 ##   rubber   A light catch-up: a rival far ahead of the player on the road eases its pace by up
 ##            to BAND_AHEAD, one far behind raises it by up to BAND_BEHIND (never above the
-##            driver's own speed, pace 1.0). Nothing changes within BAND_FROM_M.
+##            driver's own speed x BAND_CAP). Nothing changes within BAND_FROM_M.
 ##
 ## It also keeps the player's best race lap per stage (user://mobile_race.cfg), which
 ## race_bot_plus.gd uses with the time-trial record to set the rivals' pace.
@@ -63,6 +63,8 @@ const BAND_FULL_M := 400.0
 const BAND_AHEAD := 0.05
 const BAND_BEHIND := 0.08
 const BAND_TICKS := 30
+## The catch-up never takes a rival above this pace (unless it was set faster).
+const BAND_CAP := 0.95
 
 ## Off: no rival ever goes on rails (CI compares both).
 static var rails_default := true
@@ -499,7 +501,7 @@ func _band() -> void:
 					+ BAND_BEHIND * smoothstep(BAND_FROM_M, BAND_FULL_M, -gap)
 		var pace := r.base_pace * k
 		if k > 1.0:
-			pace = minf(pace, maxf(r.base_pace, 1.0))
+			pace = minf(pace, maxf(r.base_pace, BAND_CAP))
 		r.bot.set(&"pace", pace)
 
 

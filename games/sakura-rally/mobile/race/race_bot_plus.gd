@@ -17,11 +17,13 @@ extends RaceBot
 ##            to cover the player's line once, for up to DEFEND_MAX_S (never towards a car
 ##            alongside, RaceBot's rule), then lets it try. Bots still make room for each other,
 ##            but only for one YIELD_MARGIN m/s faster.
-##   pace     the lap time it is set to is never slower than the campaign's (gold x pace), and
-##            when the player has a record on the stage (time trial, or a race lap kept by
-##            race_director.gd) the field is spread around it: pole (slowest) SLOWEST_K x the
-##            player's lap, the last rival on the grid FASTEST_K x. A faster player meets faster
-##            rivals.
+##   pace     the field runs at FLOOR_POLE (pole, the slowest) to FLOOR_FRONT (the fastest) of the
+##            driver's own speed, never slower than the campaign's lap; when the player has a
+##            record on the stage (time trial, or a race lap kept by race_director.gd) and it asks
+##            for more, pole runs SLOWEST_K x the player's lap and the fastest FASTEST_K x (a
+##            little quicker than the player). Capped at PACE_CAP.
+##   steady   a lane change is confirmed over two decisions unless a car is alongside or close
+##            ahead, and the tow never carries the car into a braking zone.
 ##   network  the shipped driver evaluated in 4x4 blocks (fast_policy.gd): the same decisions at
 ##            about a quarter of the script time.
 
@@ -35,28 +37,44 @@ const ATTACK_BRAKE_NEED := 3.6
 ## A car within this many metres ahead (and ATTACK_SIDE_M across) makes it attack.
 const ATTACK_LOOK_M := 30.0
 const ATTACK_SIDE_M := 3.0
-const ATTACK_DECEL := 5.0
+const ATTACK_DECEL := 4.5
 const PASS_MARGIN_PLUS := 0.5
 const PASS_LOOK_PLUS := 50.0
 const YIELD_MARGIN := 1.5
 ## Defending against the player's car from DEFEND_FROM_M to DEFEND_TO_M behind (bumper to
 ## bumper), above DEFEND_MIN_MPS.
 const DEFEND_FROM_M := 1.0
-const DEFEND_TO_M := 22.0
+const DEFEND_TO_M := 14.0
 const DEFEND_MIN_MPS := 8.0
 ## One move: it covers the player's line for at most DEFEND_MAX_S, then not again until the
 ## player's car has been out of range for DEFEND_RESET_S.
-const DEFEND_MAX_S := 3.0
+const DEFEND_MAX_S := 2.0
 const DEFEND_RESET_S := 4.0
 const DRAFT_FROM_M := 5.0
 const DRAFT_TO_M := 30.0
 const DRAFT_SIDE_M := 1.6
 const DRAFT_MIN_MPS := 18.0
 const DRAFT_BONUS := 0.05
+## The tow only counts where the car is still accelerating (its limit this far above its speed),
+## never into a braking zone.
+const DRAFT_ROOM_MPS := 2.0
+## Steadiness: a new lane target (other than a safety move) must be wanted at LANE_CONFIRM
+## decisions in a row before the car moves for it, and a car more than PASS_NOW_M ahead does not
+## rush the decision.
+const LANE_CONFIRM := 2
+const PASS_NOW_M := 14.0
 ## A time-trial lap includes the standing start; a flying lap is about this much quicker.
 const STANDING_START_S := 3.0
-const SLOWEST_K := 1.10
-const FASTEST_K := 0.97
+## The field: pole (the slowest) at FLOOR_POLE of the driver's speed, the last car on the grid
+## (the fastest) at FLOOR_FRONT, the others between; never slower than the campaign's pace.
+const FLOOR_POLE := 0.75
+const FLOOR_FRONT := 0.88
+## With a record of yours on the stage: pole SLOWEST_K x your lap, the fastest FASTEST_K x (a
+## little quicker than you), whichever is faster than the floor.
+const SLOWEST_K := 1.06
+const FASTEST_K := 0.95
+## No pace above this (the driver is calibrated clean up to 1.0).
+const PACE_CAP := 0.95
 
 ## The network in blocks, shared by every bot (one decision runs at a time).
 static var _fast: DrivePolicy
@@ -73,6 +91,8 @@ var draft_count: int = 0
 var defend_count: int = 0
 var _defend_s: float = 0.0
 var _clear_s: float = 0.0
+var _want: float = 0.0
+var _want_n: int = 0
 
 
 func _ready() -> void:
@@ -90,21 +110,26 @@ func _ready() -> void:
 	base_pace = pace
 
 
-## Sets `pace` from the player's own lap when that asks for a faster field (see the header).
+## Sets `pace` for a race: the floor of the field (FLOOR_*), raised further from the player's own
+## lap when that asks for a faster field (see the header). Only in the game's race (the player's
+## car first in `field`), not in tools that line up bots alone.
 func _adapt_pace() -> void:
-	if car == null or track == null or field.size() < 2:
-		return
-	var map_id := str(Game.map_id)
-	var lap := minf(float(Game.best_time(map_id)) - STANDING_START_S, Director.race_best_lap(map_id))
-	if not is_finite(lap) or lap < 30.0:
+	# Main names the player's car "PlayerCar" (Game.player_car is set only after the grid)
+	if car == null or track == null or field.size() < 2 or not is_instance_valid(field[0]) \
+			or (field[0].name != &"PlayerCar" and field[0] != Game.player_car):
 		return
 	var rank := field.find(car) - 1 # field: the player's car, then the grid from pole
 	var n := field.size() - 1
 	if rank < 0 or n < 1:
 		return
-	var k := lerpf(SLOWEST_K, FASTEST_K, float(rank) / float(maxi(n - 1, 1)))
-	var car_id := "hayate" if str(car.scene_file_path).contains("hayate") else "sakura"
-	pace = maxf(pace, RaceBot.pace_for_lap(map_id, lap * k, car_id))
+	var t := float(rank) / float(maxi(n - 1, 1))
+	pace = maxf(pace, lerpf(FLOOR_POLE, FLOOR_FRONT, t))
+	var map_id := str(Game.map_id)
+	var lap := minf(float(Game.best_time(map_id)) - STANDING_START_S, Director.race_best_lap(map_id))
+	if is_finite(lap) and lap > 30.0:
+		var car_id := "hayate" if str(car.scene_file_path).contains("hayate") else "sakura"
+		pace = maxf(pace, RaceBot.pace_for_lap(map_id, lap * lerpf(SLOWEST_K, FASTEST_K, t), car_id))
+	pace = minf(pace, PACE_CAP)
 
 
 ## RaceBot._race with the cars seen first, so this decision's attack and slipstream count.
@@ -155,7 +180,8 @@ func _limit(s: float) -> float:
 
 
 func _pace(v: float, limit: float) -> void:
-	super._pace(v, limit * (1.0 + DRAFT_BONUS) if drafting else limit)
+	var tow := drafting and limit > v + DRAFT_ROOM_MPS
+	super._pace(v, limit * (1.0 + DRAFT_BONUS) if tow else limit)
 
 
 ## RaceBot._pedals with the attack distances.
@@ -246,6 +272,25 @@ func _steer_lane(lat: float, v: float, limit: float, room: float, step: float) -
 		else:
 			_clear_s = 0.0
 			_defend_s += step
+	# steadiness: a new target is taken when wanted twice in a row, or at once for a car alongside
+	# (make room) or a car close ahead (pass)
+	var urgent := false
+	for o in _near:
+		var ds: float = o[0]
+		if absf(ds) < CAR_LENGTH + 1.0 or (ds > 0.0 and ds < PASS_NOW_M):
+			urgent = true
+			break
+	if absf(target - _lane_target) > 0.3 and not urgent:
+		if absf(target - _want) < 0.3:
+			_want_n += 1
+		else:
+			_want = target
+			_want_n = 1
+		if _want_n < LANE_CONFIRM:
+			target = _lane_target
+	else:
+		_want = target
+		_want_n = 0
 	for o in _near:
 		var o_lane: float = o[5]
 		if absf(float(o[0])) < CAR_LENGTH + 1.0 and signf(o_lane - cur) == signf(target - cur) \

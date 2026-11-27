@@ -171,6 +171,14 @@ func _race(rails: bool) -> Dictionary:
 		var bot := r.get_node_or_null(^"RaceBot")
 		paces.append("%.3f" % float(bot.get(&"pace")) if bot != null else "?")
 	print("RACE %s: rival paces from pole %s" % [tag, ", ".join(paces)])
+	var lo := INF
+	var hi := 0.0
+	for r: Car in rivals:
+		var bot := r.get_node_or_null(^"RaceBot")
+		if bot != null:
+			lo = minf(lo, float(bot.get(&"pace")))
+			hi = maxf(hi, float(bot.get(&"pace")))
+	_check(lo >= 0.749 and hi >= 0.879 and hi <= 0.951, "race %s: the field runs at 0.75-0.88 of the driver's speed (%.3f-%.3f)" % [tag, lo, hi])
 	# a plain RaceBot drives the player's car (the bots defend against it as against you)
 	var gold := float((game.get_map(map_id)["medals"] as Dictionary)["gold"])
 	var driver := RaceBot.new()
