@@ -282,6 +282,11 @@ func _race(rails: bool) -> Dictionary:
 			tag, ticks / float(Engine.physics_ticks_per_second), ticks, wall_us, car_us, 100.0 * rails_share, sleeps, woken, bad,
 			res["rescues"], flips, gains, sum.call(battle["attack"]), sum.call(battle["draft"]), sum.call(battle["defend"])])
 	print("RACE %s: classification %s" % [tag, " | ".join(rows)])
+	if rails and director != null and is_instance_valid(director):
+		var scales := PackedStringArray()
+		for rv: Variant in director.get(&"rivals"):
+			scales.append("%.3f" % float(rv.get(&"rail_scale")))
+		print("RACE %s: rail speed scale per rival (rail lap / calibrated lap, 0 = never slept) %s" % [tag, ", ".join(scales)])
 	_check(finished_n == rivals.size(), "race %s: every rival finished (%d/%d)" % [tag, finished_n, rivals.size()])
 	_check(bad == 0, "race %s: every car woken from rails drove on (%d of %d went wrong)" % [tag, bad, woken])
 	if rails:

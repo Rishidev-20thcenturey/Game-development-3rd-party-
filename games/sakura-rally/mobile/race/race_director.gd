@@ -87,6 +87,9 @@ class Rival:
 	var wakes: int = 0
 	var rail_ticks: int = 0
 	var woke_at: float = -1.0
+	## Rail speed x this: the rail lap at its pace matches the lap the car drives on the road
+	## (0 = not computed yet; see _rail_scale()).
+	var rail_scale: float = 0.0
 
 
 var rails_enabled: bool = rails_default
@@ -265,6 +268,8 @@ func _sleep(r: Rival) -> void:
 	for w: WheelState in car.wheels:
 		w.contact = false # the wheel effects stop throwing dust from a car that is not there
 		w.slip = 0.0
+	if r.rail_scale == 0.0:
+		r.rail_scale = _rail_scale(r)
 	car.process_mode = Node.PROCESS_MODE_DISABLED
 	r.asleep = true
 	r.since = 0.0
@@ -354,6 +359,8 @@ func _rail_step(r: Rival, delta: float) -> void:
 		limit = float(r.bot.call(&"_limit", r.s))
 	if limit == INF:
 		limit = r.v
+	else:
+		limit *= r.rail_scale if r.rail_scale > 0.0 else 1.0
 	# the car ahead in its lane: keep RAIL_FOLLOW_M, pass on the free side when it is slower
 	var cap := INF
 	var blocker_lat := NAN
@@ -430,6 +437,52 @@ func _rail_side_clear(r: Rival, side: float) -> bool:
 		if ds > -CAR_LENGTH - 6.0 and ds < RAIL_LOOK_M and absf(track.lateral(o.idx, op) - side) < RAIL_SAME_LANE_M:
 			return false
 	return true
+
+
+## How much faster than its pace limit the car really laps: the stage's calibration (the flying
+## lap a car of its model drives at its pace, assets/ai/pace/<route>.json) over the lap the rails
+## would take: the limit profile driven with RAIL_ACCEL (O(samples), when it first goes on rails).
+## On Hanami that is about 1.04 at every pace: on the road the car's line gains on the centre
+## line the limit is measured along. 1.0 without a calibration.
+func _rail_scale(r: Rival) -> float:
+	var ref: PackedFloat32Array = r.bot.get(&"_ref")
+	var step := float(r.bot.get(&"_ref_step"))
+	var n := ref.size()
+	if n < 10 or not track.closed:
+		return 1.0
+	var car_id := str(r.entrant.info.get("car_id", "sakura")) if r.entrant != null else "sakura"
+	var laps: Dictionary = RaceBot._pace_file(str(Game.map_id)).get("laps", {})
+	var rows: Array = laps.get(car_id, laps.get("sakura", []))
+	if rows.size() < 2:
+		return 1.0
+	var pace := r.base_pace
+	var flying := NAN
+	for k in range(1, rows.size()):
+		var a: Dictionary = rows[k - 1]
+		var b: Dictionary = rows[k]
+		if pace <= float(b["pace"]) or k == rows.size() - 1:
+			var t := clampf((pace - float(a["pace"])) / maxf(float(b["pace"]) - float(a["pace"]), 1e-3), 0.0, 1.0)
+			flying = lerpf(float(a["flying"]), float(b["flying"]), t)
+			break
+	var decel := 4.0 # RaceBot.PACE_DECEL
+	var lim := PackedFloat32Array()
+	lim.resize(n)
+	for k in n:
+		lim[k] = pace * ref[k]
+	for pass_ in 2:
+		for k in range(n - 1, -1, -1):
+			var nxt := lim[(k + 1) % n]
+			lim[k] = minf(lim[k], sqrt(nxt * nxt + 2.0 * decel * step))
+	var v := lim[0]
+	var lap := 0.0
+	for pass_ in 2:
+		lap = 0.0
+		for k in n:
+			v = minf(lim[k], sqrt(v * v + 2.0 * RAIL_ACCEL * step))
+			lap += step / maxf(v, 1.0)
+	if not is_finite(flying) or flying <= 0.0:
+		return 1.0
+	return clampf(lap / flying, 0.9, 1.1)
 
 
 # ---------------------------------------------------------------- catch-up, records

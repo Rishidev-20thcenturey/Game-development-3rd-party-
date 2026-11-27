@@ -61,6 +61,13 @@ network and sound. It then moves the car along its lane at the speed its own pac
 braking for corners as the bot would. It keeps 9 m to a car ahead in the same lane and passes a
 slower one on the free side. A ground ray every 6 ticks keeps the car on the surface.
 
+Rail speed is calibrated. On the road a car laps about 4% faster than its pace limit suggests,
+because the limit is measured along the centre line and the car's line gains on it. Run straight,
+the rails would leave a sleeping car about 4% slow (Hanami: 1.035–1.041 at every pace). When a
+rival first goes on rails, the director computes the lap its limit profile would take. This is an
+O(samples) pass that agrees with a time-stepped simulation to 0.1 s. It then scales the rail speed
+by that lap over the stage's calibrated flying lap for the car's model and pace.
+
 The car wakes before it can be seen or touched. That happens within 160 m and in view, within
 42 m anywhere, within 40 m of road from your car, or when the spot one second ahead comes into
 view. On waking it rejoins physics at its speed, with its wheels spinning to match, in a gear that
@@ -85,3 +92,22 @@ fell in ticks 0–5, so at 30 fps one frame ran four decisions and the next ran 
 * `mobile_check.gd` (rendered run): the grid, the pack and the perf meter in a race. The meter
   shows "N on rails".
 * The upstream `flows.gd` race checks still run against the patched game.
+
+## Measured (CI, GitHub runner, headless, Hanami, 2 laps)
+
+Run 45971512590:
+
+| | Upstream / rails off | This build |
+|---|---|---|
+| Network, one decision | 654 µs (`DrivePolicy`) | 74 µs (8.8×), worst logit difference 2.9e-6, same options 400/400 |
+| Bot script cost (race probe COST) | 760 + 72 µs per decision | 148 + 81 µs |
+| Cars' own physics per tick, full race | 1276 µs | 918 µs (−28%) with rails |
+| Whole physics tick | 2915 µs | 2414 µs (−17%) |
+| Rival ticks on rails | 0 | 34% (49 sleeps, 48 wakes, none went wrong) |
+| Rescues / flips | 0 / 0 | 0 / 0 |
+| Overtakes / contacts (race probe, no player) | 18 / 2 | 21 / 8 (worst a 1.55 m/s nudge) |
+
+Headless, the camera follows the player's car closely. On a phone the ratio of rails is similar.
+Each rival on rails saves its full physics step (about 0.7 ms per 120 Hz tick on the Adreno 730
+tablet). Physics ran up to 4 ticks per frame there, so a race at 30–40 fps gets back several ms
+per frame when the field spreads out.
