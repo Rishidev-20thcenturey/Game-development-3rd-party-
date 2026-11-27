@@ -1,16 +1,19 @@
 CHECK ok    driver policy loads
-POLICY batched network: worst logit difference 2.86102294921875e-06, same options 400/400, 1161 us -> 125 us per evaluation (9.3x)
+POLICY batched network: worst logit difference 2.86102294921875e-06, same options 400/400, 911 us -> 101 us per evaluation (9.0x)
 CHECK ok    batched network: logits match DrivePolicy (worst 2.86102294921875e-06)
 CHECK ok    batched network: the same options (400/400)
-CHECK ok    batched network: faster (125 vs 1161 us)
+CHECK ok    batched network: faster (101 vs 911 us)
 CHECK ok    race off: a race director, rails off
 CHECK ok    race off: every rival races with race_bot_plus.gd (6/6)
 CHECK ok    race off: the rivals decide in 6 different ticks ([0, 2, 4, 6, 8, 10])
 RACE off: rival paces from pole 0.750, 0.776, 0.802, 0.828, 0.854, 0.880
 CHECK ok    race off: the field runs at 0.75-0.88 of the driver's speed (0.750-0.880)
-RACE off: 279.6 s, 33557 ticks: physics tick 3796 us (whole engine, headless), cars' physics 1757 us per tick, rails 0% of rival ticks, 0 sleeps, 0 wakes (0 went wrong), rescues 0, flips 0, places gained on track 46, attack 9123 / draft 4005 / defend 13 decisions
-RACE off: classification 1 Aoi Fujimura 3:54.224 | 2 Hana Kobayashi 4:16.756 | 3 Mei Sakamoto 4:17.144 | 4 Kenji Hayashi 4:17.319 | 5 Ren Takeda 4:17.714 | 6 Daichi Ono 4:18.627 | 7 You 4:39.650
-RACE off: order flips 47, 2 involving the player; most: Mei Sakamoto/Kenji Hayashi 26 flips (0 with one on rails, 3.1 m apart on average) | Kenji Hayashi/Ren Takeda 6 flips (0 with one on rails, 3.1 m apart on average) | Daichi Ono/Ren Takeda 5 flips (0 with one on rails, 2.8 m apart on average) | Mei Sakamoto/Aoi Fujimura 3 flips (0 with one on rails, 3.0 m apart on average)
+RACE off: churn Kenji Hayashi/Ren Takeda flip 3 at 48.1 s: Kenji Hayashi dist 1008.4 idx 645 v 15.0 m/s physics lat 5.2 pos (120.0, 65.0, -165.0) | Ren Takeda dist 1008.4 idx 645 v 19.0 m/s physics lat 1.8 pos (119.0, 65.0, -168.0)
+RACE off: churn Hana Kobayashi/Ren Takeda flip 3 at 99.1 s: Hana Kobayashi dist 2303.8 idx 1292 v 15.7 m/s physics lat -1.7 pos (-419.0, 54.0, 25.0) | Ren Takeda dist 2303.9 idx 1292 v 17.8 m/s physics lat -4.4 pos (-417.0, 54.0, 23.0)
+RACE off: churn Hana Kobayashi/Kenji Hayashi flip 3 at 102.7 s: Hana Kobayashi dist 2362.7 idx 1322 v 20.0 m/s physics lat 5.3 pos (-389.0, 50.0, 75.0) | Kenji Hayashi dist 2362.7 idx 1322 v 21.6 m/s physics lat 2.7 pos (-387.0, 50.0, 74.0)
+RACE off: 279.9 s, 33584 ticks: physics tick 2995 us (whole engine, headless), cars' physics 1329 us per tick, rails 0% of rival ticks, 0 sleeps, 0 wakes (0 went wrong), rescues 0, flips 0, places gained on track 33, attack 9203 / draft 4148 / defend 22 decisions
+RACE off: classification 1 Aoi Fujimura 4:03.732 | 2 Ren Takeda 4:04.584 | 3 Mei Sakamoto 4:06.484 | 4 Kenji Hayashi 4:06.984 | 5 Hana Kobayashi 4:17.383 | 6 Daichi Ono 4:17.896 | 7 You 4:39.877
+RACE off: order flips 34, 2 involving the player; most: Hana Kobayashi/Kenji Hayashi 13 flips (0 with one on rails, 3.0 m apart on average) | Kenji Hayashi/Ren Takeda 5 flips (0 with one on rails, 3.2 m apart on average) | Hana Kobayashi/Ren Takeda 3 flips (0 with one on rails, 3.1 m apart on average) | You/Ren Takeda 2 flips (0 with one on rails, 3.4 m apart on average)
 CHECK ok    race off: every rival finished (6/6)
 CHECK ok    race off: every car woken from rails drove on (0 of 0 went wrong)
 CHECK ok    race off: no rival on rails (0)
@@ -19,15 +22,26 @@ CHECK ok    race on: every rival races with race_bot_plus.gd (6/6)
 CHECK ok    race on: the rivals decide in 6 different ticks ([0, 2, 4, 6, 8, 10])
 RACE on: rival paces from pole 0.750, 0.776, 0.802, 0.828, 0.854, 0.880
 CHECK ok    race on: the field runs at 0.75-0.88 of the driver's speed (0.750-0.880)
-RACE on: 279.9 s, 33591 ticks: physics tick 2365 us (whole engine, headless), cars' physics 660 us per tick, rails 74% of rival ticks, 32 sleeps, 32 wakes (0 went wrong), rescues 0, flips 0, places gained on track 24, attack 1966 / draft 655 / defend 28 decisions
-RACE on: classification 1 Mei Sakamoto 4:04.220 | 2 Aoi Fujimura 4:04.621 | 3 Hana Kobayashi 4:17.280 | 4 Ren Takeda 4:17.703 | 5 Daichi Ono 4:17.977 | 6 Kenji Hayashi 4:18.206 | 7 You 4:39.939
-RACE on: order flips 25, 2 involving the player; most: Hana Kobayashi/Aoi Fujimura 5 flips (3 with one on rails, 6.5 m apart on average) | Daichi Ono/Ren Takeda 5 flips (4 with one on rails, 3.1 m apart on average) | Hana Kobayashi/Kenji Hayashi 4 flips (0 with one on rails, 2.2 m apart on average) | Kenji Hayashi/Aoi Fujimura 3 flips (1 with one on rails, 4.4 m apart on average)
+RACE on: churn Mei Sakamoto/Aoi Fujimura flip 3 at 42.4 s: Mei Sakamoto dist 961.3 idx 621 v 10.3 m/s physics lat 5.8 pos (100.0, 63.0, -133.0) | Aoi Fujimura dist 961.3 idx 621 v 10.8 m/s physics lat 3.9 pos (98.0, 63.0, -133.0)
+RACE on: woken car Rival4 went wrong 2.8 s after waking: slow (4.0 m/s); nearest other car 3.4 m
+RACE on: churn Mei Sakamoto/Ren Takeda flip 3 at 60.4 s: Mei Sakamoto dist 1290.1 idx 786 v 15.6 m/s physics lat -4.2 pos (307.0, 82.0, -269.0) | Ren Takeda dist 1290.1 idx 786 v 20.2 m/s physics lat -1.4 pos (309.0, 82.0, -271.0)
+RACE on: churn Kenji Hayashi/Ren Takeda flip 3 at 86.0 s: Kenji Hayashi dist 2037.7 idx 1159 v 21.7 m/s RAILS lat -1.5 pos (-387.0, 75.0, -208.0) | Ren Takeda dist 2037.7 idx 1159 v 21.7 m/s RAILS lat 1.5 pos (-389.0, 75.0, -210.0)
+RACE on: churn Kenji Hayashi/Ren Takeda flip 50 at 88.3 s: Kenji Hayashi dist 2084.1 idx 1183 v 19.1 m/s RAILS lat -1.5 pos (-398.0, 71.0, -166.0) | Ren Takeda dist 2084.0 idx 1183 v 19.1 m/s RAILS lat 1.5 pos (-400.0, 71.0, -165.0)
+RACE on: churn Kenji Hayashi/Ren Takeda flip 300 at 101.9 s: Kenji Hayashi dist 2339.0 idx 1310 v 20.6 m/s RAILS lat -1.5 pos (-397.0, 52.0, 52.0) | Ren Takeda dist 2339.0 idx 1310 v 20.6 m/s RAILS lat 1.5 pos (-400.0, 52.0, 54.0)
+RACE on: churn Kenji Hayashi/Ren Takeda flip 1000 at 147.3 s: Kenji Hayashi dist 3482.9 idx 406 v 21.6 m/s RAILS lat -1.5 pos (226.0, 42.0, 28.0) | Ren Takeda dist 3482.9 idx 406 v 21.6 m/s RAILS lat 1.5 pos (229.0, 42.0, 30.0)
+RACE on: churn Daichi Ono/Aoi Fujimura flip 3 at 184.3 s: Daichi Ono dist 4172.0 idx 751 v 13.8 m/s RAILS lat 1.5 pos (324.0, 78.0, -215.0) | Aoi Fujimura dist 4172.0 idx 751 v 13.9 m/s RAILS lat -1.4 pos (322.0, 78.0, -217.0)
+RACE on: 279.9 s, 33585 ticks: physics tick 1920 us (whole engine, headless), cars' physics 563 us per tick, rails 69% of rival ticks, 37 sleeps, 37 wakes (1 went wrong), rescues 0, flips 0, places gained on track 1211, attack 2862 / draft 1252 / defend 29 decisions
+RACE on: classification 1 Ren Takeda 4:05.278 | 2 Kenji Hayashi 4:10.583 | 3 Hana Kobayashi 4:17.951 | 4 Mei Sakamoto 4:18.376 | 5 Aoi Fujimura 4:18.808 | 6 Daichi Ono 4:19.670 | 7 You 4:39.886
+RACE on: order flips 1212, 2 involving the player; most: Kenji Hayashi/Ren Takeda 1161 flips (1161 with one on rails, 3.0 m apart on average) | Daichi Ono/Aoi Fujimura 31 flips (30 with one on rails, 2.9 m apart on average) | Mei Sakamoto/Ren Takeda 5 flips (1 with one on rails, 2.9 m apart on average) | Mei Sakamoto/Aoi Fujimura 4 flips (0 with one on rails, 2.0 m apart on average)
 RACE on: rail speed scale per rival (rail lap / calibrated lap, 0 = never slept) 1.034, 1.025, 1.034, 1.026, 1.036, 1.029
 CHECK ok    race on: every rival finished (6/6)
-CHECK ok    race on: every car woken from rails drove on (0 of 32 went wrong)
-CHECK ok    race on: rivals went on rails and came back (32 sleeps, 32 wakes)
-RACE compare: physics tick 3796 -> 2365 us (-38%), cars' physics 1757 -> 660 us per tick (-62%), rails 74% of rival ticks
-CHECK ok    rails: the cars' physics costs less per tick (660 vs 1757 us)
+CHECK FAIL  race on: every car woken from rails drove on (1 of 37 went wrong)
+CHECK ok    race on: rivals went on rails and came back (37 sleeps, 37 wakes)
+RACE compare: physics tick 2995 -> 1920 us (-36%), cars' physics 1329 -> 563 us per tick (-58%), rails 69% of rival ticks
+CHECK ok    rails: the cars' physics costs less per tick (563 vs 1329 us)
 CHECK ok    rails: no more flips than without (0 vs 0)
-CHECK ok    rails: the running order does not churn (25 order flips vs 47 without)
-SUMMARY race_check: 21 checks, 0 failed
+CHECK FAIL  rails: the running order does not churn (1212 order flips vs 34 without)
+SUMMARY race_check: 21 checks, 2 failed
+FAIL race on: every car woken from rails drove on (1 of 37 went wrong)
+FAIL rails: the running order does not churn (1212 order flips vs 34 without)
+ERROR: 8 resources still in use at exit (run with --verbose for details).
