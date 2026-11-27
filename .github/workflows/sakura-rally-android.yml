@@ -143,7 +143,11 @@ jobs:
               -s res://mobile/ci/race_battle.gd -- route=hanami runs=1 bot=$b 2>&1 | tee "race_battle_$b.log" \
               | grep -E "^(RACE|SUMMARY|COST)" || true
           done
-          # the game's field (0.75-0.88 of the driver's speed, pole slowest): stability at race pace
+          # the game's field (0.75-0.88 of the driver's speed, pole slowest): stability at race pace,
+          # upstream's bot at the same paces for comparison
+          timeout 900 godot --headless --disable-crash-handler --fixed-fps 120 --audio-driver Dummy --path "$PROJ" \
+            -s res://mobile/ci/race_battle.gd -- route=hanami runs=2 bot=upstream pace=0.75,0.776,0.802,0.828,0.854,0.88 player=0.97 \
+            2>&1 | tee race_battle_upstream80.log | grep -E "^(RACE|SUMMARY|COST)" || true
           timeout 900 godot --headless --disable-crash-handler --fixed-fps 120 --audio-driver Dummy --path "$PROJ" \
             -s res://mobile/ci/race_battle.gd -- route=hanami runs=2 bot=plus pace=0.75,0.776,0.802,0.828,0.854,0.88 player=0.97 \
             2>&1 | tee race_battle_plus80.log | grep -E "^(RACE|SUMMARY|COST)" || true
@@ -168,10 +172,10 @@ jobs:
             echo "::notice title=$f::${ok} checks ok, ${bad} failed$(grep -m1 -o 'SUMMARY.*' "$f.log" | sed 's/^/ — /')"
             [ "$ok" -gt 0 ] || echo "::error title=$f::no checks ran (script did not load?)"
             grep 'CHECK FAIL' "$f.log" | head -n 15 | sed "s/^.*CHECK FAIL/::warning title=$f FAIL::/" || true
-            grep -E 'SCRIPT ERROR|Parse Error|TIMEOUT' "$f.log" | sort | uniq -c | sort -rn | head -n 5 | sed "s/^/::warning title=$f error::/" || true
+            grep -E 'SCRIPT ERROR|Parse Error|TIMEOUT|NAN first' "$f.log" | sort | uniq -c | sort -rn | head -n 5 | sed "s/^/::warning title=$f error::/" || true
           done
           # race mode numbers, readable from the run page without the logs
-          for f in race_check.log race_battle_upstream.log race_battle_plus.log race_battle_plus80.log render.log flows.log; do
+          for f in race_check.log race_battle_upstream.log race_battle_plus.log race_battle_upstream80.log race_battle_plus80.log render.log flows.log; do
             [ -f "$f" ] || continue
             grep -E '^(RACE|POLICY|COST|SUMMARY)|RACE ' "$f" | grep -vE 'SUMMARY (mobile|flows)' | head -n 12 \
               | cut -c1-900 | sed "s/^/::notice title=${f%.log}::/" || true
@@ -342,10 +346,10 @@ jobs:
           for f in import export; do if [ -f $f.log ]; then tail -n 200 $f.log > "$D/${f}_tail.log"; fi; done
           grep -E "CHECK|SUMMARY|TIMEOUT|race" flows.log > "$D/flows_summary.log" || true
           grep -E "CHECK|SUMMARY|RACE|POLICY|FAIL|TIMEOUT|ERROR" race_check.log > "$D/race_check.log" || true
-          for b in upstream plus plus80; do
+          for b in upstream plus upstream80 plus80; do
             grep -E "^(RACE|SUMMARY|COST|BOT)|ERROR" "race_battle_$b.log" > "$D/race_battle_$b.log" || true
           done
-          grep -E "CHECK|SUMMARY|SHOT|TIMEOUT|CENSUS|PARITY| fps  GPU" render.log > "$D/render_summary.log" || true
+          grep -E "CHECK|SUMMARY|SHOT|TIMEOUT|CENSUS|PARITY| fps  GPU|NAN|RACE" render.log > "$D/render_summary.log" || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$D"

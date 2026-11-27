@@ -30,10 +30,10 @@ extends RaceBot
 const FastPolicy := preload("res://mobile/race/fast_policy.gd")
 const Director := preload("res://mobile/race/race_director.gd")
 
-const ATTACK_FOLLOW_S := 0.25
-const ATTACK_LIFT_TTC_S := 1.15
-const ATTACK_BRAKE_TTC_S := 0.8
-const ATTACK_BRAKE_NEED := 3.6
+const ATTACK_FOLLOW_S := 0.30
+const ATTACK_LIFT_TTC_S := 1.3
+const ATTACK_BRAKE_TTC_S := 0.9
+const ATTACK_BRAKE_NEED := 3.3
 ## A car within this many metres ahead (and ATTACK_SIDE_M across) makes it attack.
 const ATTACK_LOOK_M := 30.0
 const ATTACK_SIDE_M := 3.0

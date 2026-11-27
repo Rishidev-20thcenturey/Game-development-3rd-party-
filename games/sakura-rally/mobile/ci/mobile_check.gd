@@ -37,6 +37,11 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	# NaN watch over the whole run: logs the first frame the camera or a car is not finite
+	_NAN_WATCH = GDScript.new()
+	_NAN_WATCH.source_code = _NAN_WATCH_SRC
+	_NAN_WATCH.reload()
+	_watch = _nan_watch()
 	_check(mobile != null and bool(mobile.touch_enabled), "Mobile autoload in touch mode")
 	controls = mobile.controls
 	_check(controls != null, "touch controls created")
@@ -202,6 +207,7 @@ func _run() -> void:
 	_check(_left_menu(), "tapping New journey starts the campaign (state=%s)" % (game.State as Dictionary).find_key(game.state))
 	await _seconds(3.0)
 	await shot("07_campaign")
+	_check(str(_watch.get_meta(&"first", "")) == "", "camera and cars never NaN over the run %s" % str(_watch.get_meta(&"first", "")))
 	_finish()
 
 
@@ -384,11 +390,7 @@ func _census_checks() -> void:
 ## shows it), and a shot of the pack.
 func _race_checks() -> void:
 	game.request_start(opts["map"], game.MODE_RACE)
-	if _NAN_WATCH == null:
-		_NAN_WATCH = GDScript.new()
-		_NAN_WATCH.source_code = _NAN_WATCH_SRC
-		_NAN_WATCH.reload()
-	var watch := _nan_watch()
+	var watch := _watch
 	await _until(func() -> bool: return main.race != null and _on_grid(), 90.0)
 	await _seconds(0.6)
 	var race: Node = main.race
@@ -450,8 +452,7 @@ func _race_checks() -> void:
 		perf.meter_on = false
 	if is_instance_valid(driver):
 		driver.queue_free()
-	watch.set_meta(&"stop", true)
-	_check(str(watch.get_meta(&"first", "")) == "", "race: camera and cars never NaN %s" % str(watch.get_meta(&"first", "")))
+	_check(str(watch.get_meta(&"first", "")) == "", "camera and cars never NaN so far %s" % str(watch.get_meta(&"first", "")))
 
 
 ## A node that checks every frame (through the race) that the current camera and every car have
@@ -485,10 +486,24 @@ func _process(_d: float) -> void:
 		if is_instance_valid(c) and not (c as Node3D).global_position.is_finite():
 			bad += " car %s (process %s)" % [c.name, (c as Node).can_process()]
 	if bad != "" and not has_meta(&"first"):
-		set_meta(&"first", "frame %d state %s: %s" % [frames, (g.State as Dictionary).find_key(g.state), bad])
+		var extra := ""
+		var main: Node = get_meta(&"check").get(&"main")
+		var cine: Node = main.get(&"cine") if main != null else null
+		if cine != null:
+			var cc: Variant = cine.get(&"car")
+			extra = " | cine mode %s current %s, car %s" % [cine.get(&"mode"), (cine as Camera3D).current,
+					(cc as Node).name if cc != null and is_instance_valid(cc) else "none"]
+			if cc != null and is_instance_valid(cc):
+				extra += " origin finite %s, interpolated finite %s" % [(cc as Node3D).global_position.is_finite(),
+						(cc as Node3D).get_global_transform_interpolated().origin.is_finite()]
+		var chase: Node = main.get(&"chase") if main != null else null
+		if chase != null:
+			extra += " | chase current %s at %s" % [(chase as Camera3D).current, (chase as Node3D).global_position]
+		set_meta(&"first", "frame %d state %s: %s%s" % [frames, (g.State as Dictionary).find_key(g.state), bad, extra])
 		print("NAN first: ", get_meta(&"first"))
 """
 static var _NAN_WATCH: GDScript = null
+var _watch: Node
 
 
 ## The two exact-look levers (hidden-object culling, fast ink pass): what each saves on every

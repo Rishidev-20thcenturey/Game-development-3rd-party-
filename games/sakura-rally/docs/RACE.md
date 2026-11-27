@@ -30,8 +30,8 @@ race costs. It does not touch the driving model or the network's weights.
 
 | | Upstream `RaceBot` | `race_bot_plus.gd` |
 |---|---|---|
-| Following gap | 2 m + 0.35 s | 2 m + 0.25 s |
-| Lift / brake TTC | 1.5 s / 1.0 s | 1.15 s / 0.8 s |
+| Following gap | 2 m + 0.35 s | 2 m + 0.30 s |
+| Lift / brake TTC | 1.5 s / 1.0 s | 1.3 s / 0.9 s |
 | Pass a car slower by | 1.0 m/s, within 40 m | 0.5 m/s, within 50 m |
 | Corner braking with a car close ahead | 4 m/s² | 4.5 m/s² (brakes a little later) |
 | Slipstream (car ahead in lane, 5–30 m, > 18 m/s) | — | pace limit +5% |
