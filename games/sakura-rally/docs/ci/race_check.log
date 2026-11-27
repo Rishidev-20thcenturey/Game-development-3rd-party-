@@ -1,0 +1,35 @@
+SCRIPT ERROR: Compile Error: Identifier not found: Game
+SCRIPT ERROR: Compile Error: Identifier not found: Game
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+ERROR: Failed to load script "res://mobile/ci/race_check.gd" with error "Compilation failed".
+CHECK ok    driver policy loads
+ERROR: String formatting error: unsupported format character.
+POLICY batched network: worst logit difference %.2e, same options %d/%d, %.0f us -> %.0f us per evaluation (%.1fx)
+ERROR: String formatting error: unsupported format character.
+CHECK ok    batched network: logits match DrivePolicy (worst %.2e)
+CHECK ok    batched network: the same options (400/400)
+CHECK ok    batched network: faster (101 vs 928 us)
+SCRIPT ERROR: Invalid call. Nonexistent function 'new' in base 'GDScript'.
+SCRIPT ERROR: Invalid call. Nonexistent function 'new' in base 'GDScript'.
+CHECK FAIL  race off: a race director, rails off
+CHECK FAIL  race off: every rival races with race_bot_plus.gd (0/6)
+CHECK FAIL  race off: the rivals decide in 0 different ticks ([])
+RACE off: rival paces from pole ?, ?, ?, ?, ?, ?
+ERROR: Node not found: "RaceBot" (relative to "/root/Main/Rival0").
+SCRIPT ERROR: Invalid access to property or key 'field' on a base object of type 'Nil'.
+SCRIPT ERROR: Invalid call. Nonexistent function 'new' in base 'GDScript'.
+SCRIPT ERROR: Invalid call. Nonexistent function 'new' in base 'GDScript'.
+CHECK FAIL  race on: a race director, rails on
+CHECK FAIL  race on: every rival races with race_bot_plus.gd (0/6)
+CHECK FAIL  race on: the rivals decide in 0 different ticks ([])
+RACE on: rival paces from pole ?, ?, ?, ?, ?, ?
+ERROR: Node not found: "RaceBot" (relative to "/root/Main/Rival0").
+SCRIPT ERROR: Invalid access to property or key 'field' on a base object of type 'Nil'.
+SUMMARY race_check: 10 checks, 6 failed
+FAIL race off: a race director, rails off
+FAIL race off: every rival races with race_bot_plus.gd (0/6)
+FAIL race off: the rivals decide in 0 different ticks ([])
+FAIL race on: a race director, rails on
+FAIL race on: every rival races with race_bot_plus.gd (0/6)
+FAIL race on: the rivals decide in 0 different ticks ([])
+ERROR: 26 resources still in use at exit (run with --verbose for details).

@@ -1,0 +1,6 @@
+SCRIPT ERROR: Compile Error: Identifier not found: Game
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+ERROR: Failed to load script "res://mobile/ci/race_battle.gd" with error "Compilation failed".
+SCRIPT ERROR: Invalid call. Nonexistent function 'new' in base 'GDScript'.
+SCRIPT ERROR: Invalid access to property or key 'car' on a base object of type 'Dictionary'.
+ERROR: 5 resources still in use at exit (run with --verbose for details).

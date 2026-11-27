@@ -1,0 +1,14 @@
+SCRIPT ERROR: Compile Error: Identifier not found: Game
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+ERROR: Failed to load script "res://mobile/ci/race_battle.gd" with error "Compilation failed".
+COST decision: network 1022 us + racing 84 us per bot; 7 bots on 7 phases -> 645 us per tick on average
+BOT run=1 grid=1 Hana car=hayate pace=0.608 finish=7 laps=155.48,151.76 cal=154.40,151.89 overtakes=0 contacts=1 worst=241 Ns (0.19 m/s, bumped 0.04) rescues=0 flips=0 off=6.3 s wander=7.4 m held=8.6 s
+BOT run=1 grid=2 Daichi car=sakura pace=0.651 finish=6 laps=143.73,141.24 cal=142.74,140.68 overtakes=1 contacts=0 worst=0 Ns (0.00 m/s, bumped 0.00) rescues=0 flips=0 off=8.1 s wander=6.5 m held=13.3 s
+BOT run=1 grid=3 Mei car=hayate pace=0.689 finish=5 laps=144.32,136.45 cal=137.62,134.46 overtakes=2 contacts=1 worst=241 Ns (0.19 m/s, bumped 0.04) rescues=0 flips=0 off=3.4 s wander=7.9 m held=54.9 s
+BOT run=1 grid=4 Kenji car=sakura pace=0.719 finish=3 laps=132.28,128.49 cal=130.69,128.24 overtakes=3 contacts=0 worst=0 Ns (0.00 m/s, bumped 0.00) rescues=0 flips=0 off=6.0 s wander=6.3 m held=11.8 s
+BOT run=1 grid=5 Aoi car=hayate pace=0.747 finish=2 laps=132.74,124.26 cal=128.20,124.50 overtakes=4 contacts=1 worst=165 Ns (0.13 m/s, bumped 0.03) rescues=0 flips=0 off=2.3 s wander=7.6 m held=16.8 s
+BOT run=1 grid=6 Ren car=sakura pace=0.766 finish=1 laps=127.51,120.72 cal=123.66,120.77 overtakes=5 contacts=1 worst=165 Ns (0.13 m/s, bumped 0.00) rescues=0 flips=0 off=1.9 s wander=7.6 m held=14.9 s
+BOT run=1 grid=7 player car=sakura pace=0.704 finish=4 laps=137.82,130.62 cal=133.65,130.72 overtakes=3 contacts=0 worst=0 Ns (0.00 m/s, bumped 0.00) rescues=0 flips=0 off=3.1 s wander=7.1 m held=11.0 s
+RACE run=1 route=hanami laps=2 finished=7/7 flips=0 rescues=0 overtakes=18 contacts=2 worst=241 Ns (0.19 m/s, bumped 0.04) off=31.1 s
+SUMMARY route=hanami runs=1 laps=2 finished=7/7 flips=0 rescues/race=0.00 overtakes/race=18.0 contacts/race=2.0 worst=241 Ns (0.19 m/s, bumped 0.04) finish_area_contacts/race=5.0 lap_err lap1 median=3.84 mean=3.27 max=6.69 s within_2s=3/7 flying median=0.24 mean=0.48 max=1.99 s within_2s=7/7 off=31.1 s/race
+COST physics tick mean=4698 us max=112547 us over 36869 ticks
