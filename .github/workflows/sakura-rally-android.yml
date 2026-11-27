@@ -136,7 +136,7 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          timeout 1200 godot --headless --disable-crash-handler --fixed-fps 60 --audio-driver Dummy --path "$PROJ" \
+          timeout 1500 godot --headless --disable-crash-handler --fixed-fps 60 --audio-driver Dummy --path "$PROJ" \
             -s res://mobile/ci/race_check.gd -- map=hanami 2>&1 | tee race_check.log | grep -E "CHECK|SUMMARY|RACE|POLICY|FAIL|TIMEOUT" || true
           for b in upstream plus; do
             timeout 900 godot --headless --disable-crash-handler --fixed-fps 120 --audio-driver Dummy --path "$PROJ" \
@@ -150,7 +150,7 @@ jobs:
           set -o pipefail
           sudo apt-get update -qq && sudo apt-get install -y -qq mesa-vulkan-drivers xvfb > /dev/null
           mkdir -p "$OUT/shots"
-          timeout 2400 xvfb-run -a -s "-screen 0 1600x720x24" godot --rendering-method mobile --fixed-fps 30 \
+          timeout 3000 xvfb-run -a -s "-screen 0 1600x720x24" godot --rendering-method mobile --fixed-fps 30 \
             --disable-crash-handler --path "$PROJ" -s res://mobile/ci/mobile_check.gd -- --touch "out=$OUT/shots" \
             2>&1 | tee render.log | grep -E "CHECK|SUMMARY|SHOT|FAIL|ERROR|TIMEOUT"
           ls -la "$OUT/shots"
@@ -166,6 +166,13 @@ jobs:
             grep 'CHECK FAIL' "$f.log" | head -n 15 | sed "s/^.*CHECK FAIL/::warning title=$f FAIL::/" || true
             grep -E 'SCRIPT ERROR|Parse Error|TIMEOUT' "$f.log" | sort | uniq -c | sort -rn | head -n 5 | sed "s/^/::warning title=$f error::/" || true
           done
+          # race mode numbers, readable from the run page without the logs
+          for f in race_check.log race_battle_upstream.log race_battle_plus.log render.log flows.log; do
+            [ -f "$f" ] || continue
+            grep -E '^(RACE|POLICY|COST|SUMMARY)|RACE ' "$f" | grep -vE 'SUMMARY (mobile|flows)' | head -n 12 \
+              | cut -c1-900 | sed "s/^/::notice title=${f%.log}::/" || true
+          done
+          [ -f compile.log ] && { grep -E 'SUMMARY|COMPILE FAIL|Error' compile.log | head -n 6 | sed 's/^/::notice title=compile::/' || true; }
           if [ -f import.log ]; then
             echo "::notice title=import::$(grep -c -E '^ERROR|SCRIPT ERROR' import.log || true) error lines"
             grep -E '^ERROR|SCRIPT ERROR' import.log | sort | uniq -c | sort -rn | head -n 5 | sed 's/^/::warning title=import error::/' || true

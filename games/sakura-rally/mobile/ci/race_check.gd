@@ -15,9 +15,10 @@ extends SceneTree
 ##    flips, places changed, finishers and their times, and how often the bots attacked,
 ##    drafted and defended. Prints RACE / POLICY lines, CHECK lines and a SUMMARY.
 
-const FastPolicy := preload("res://mobile/race/fast_policy.gd")
-const Director := preload("res://mobile/race/race_director.gd")
-const Plus := preload("res://mobile/race/race_bot_plus.gd")
+## Loaded once the autoloads are up (a -s script compiles before them, and these name Game).
+var FastPolicy: GDScript
+var Director: GDScript
+const PLUS_PATH := "res://mobile/race/race_bot_plus.gd"
 
 var opts := {"map": "hanami", "player": "1.1", "seconds": "330", "runs": "off,on"}
 var game: Node
@@ -68,6 +69,8 @@ func _initialize() -> void:
 
 func _run() -> void:
 	await _until(func() -> bool: return int(game.state) == int(game.State.MENU), 120.0)
+	FastPolicy = load("res://mobile/race/fast_policy.gd")
+	Director = load("res://mobile/race/race_director.gd")
 	_policy_checks()
 	var results := {}
 	for mode in str(opts["runs"]).split(",", false):
@@ -93,8 +96,8 @@ func _policy_checks() -> void:
 	_check(plain != null, "driver policy loads")
 	if plain == null:
 		return
-	var fast := FastPolicy.new()
-	fast.adopt(plain)
+	var fast: DrivePolicy = FastPolicy.new()
+	fast.call(&"adopt", plain)
 	var worst := 0.0
 	var test: Array = plain.meta.get("test_obs", [])
 	if test.size() == plain.obs_size:
@@ -138,9 +141,9 @@ func _policy_checks() -> void:
 
 func _race(rails: bool) -> Dictionary:
 	var tag := "on" if rails else "off"
-	Director.rails_default = rails
+	Director.set(&"rails_default", rails)
 	# both runs start from the same rival paces: no race lap kept from an earlier run
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(Director.RACE_CFG))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(str(Director.get(&"RACE_CFG"))))
 	game.set(&"ai_drove", true)
 	var map_id := str(opts["map"])
 	game.request_start(map_id, game.MODE_RACE)
@@ -157,7 +160,7 @@ func _race(rails: bool) -> Dictionary:
 	var phases := {}
 	for r: Car in rivals:
 		var bot := r.get_node_or_null(^"RaceBot")
-		plus += int(bot != null and bot.get_script() == Plus)
+		plus += int(bot != null and (bot.get_script() as Script).resource_path == PLUS_PATH)
 		if bot != null:
 			phases[int(bot.get(&"phase"))] = true
 	_check(director != null and bool(director.get(&"rails_enabled")) == rails, "race %s: a race director, rails %s" % [tag, tag])

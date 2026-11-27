@@ -376,7 +376,7 @@ func _census_checks() -> void:
 
 
 ## Race mode (mobile/race): the director joins the race, every rival races with
-## race_bot_plus.gd, the grid with six rivals (shot), then 24 s of racing with a RaceBot on the
+## race_bot_plus.gd, the grid with six rivals (shot), then 24 s (9 s when rendering) of racing with a RaceBot on the
 ## player's car: the cars' physics per tick and how many rivals are on rails (the perf meter
 ## shows it), and a shot of the pack.
 func _race_checks() -> void:
@@ -410,7 +410,8 @@ func _race_checks() -> void:
 	var most_asleep := 0
 	var car_ms := 0.0
 	var n := 0
-	var t_end: float = 24.0
+	# software rendering draws a seven-car race slowly: a shorter look when rendering
+	var t_end: float = 24.0 if DisplayServer.get_name() == "headless" else 9.0
 	var t := 0.0
 	while t < t_end:
 		await _seconds(1.0)
@@ -421,7 +422,7 @@ func _race_checks() -> void:
 			var st: Dictionary = perf.stats
 			car_ms += float(st.get("car_ms", 0.0))
 			n += 1
-		if t == 12.0:
+		if t == minf(12.0, t_end - 3.0):
 			await shot("09_race_pack")
 	var meter := str(perf._meter.text).replace("\n", " | ") if perf != null else ""
 	_log("RACE %d s: most rivals on rails at once %d, sleeps %d, wakes %d, cars' physics %.2f ms per tick (mean of the meter), meter: %s" % [

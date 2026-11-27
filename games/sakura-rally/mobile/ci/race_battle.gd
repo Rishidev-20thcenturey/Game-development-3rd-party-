@@ -9,14 +9,17 @@ extends "res://tools/rl/race_probe.gd"
 ## network; there is no player's car to defend against here), bot=upstream with RaceBot as
 ## shipped, so the two SUMMARY / COST lines compare the racing and the script cost.
 
-const Plus := preload("res://mobile/race/race_bot_plus.gd")
+## Loaded on first use, once the autoloads are up (it names Game; a -s script compiles first).
+var _plus: GDScript
 
 
 func _spawn(car_id: String, pace: float, phase: int, contacts: bool) -> Dictionary:
 	var e := super._spawn(car_id, pace, phase, contacts)
 	if str(opts.get("bot", "upstream")) == "plus":
 		var old: RaceBot = e["bot"]
-		var bot: RaceBot = Plus.new()
+		if _plus == null:
+			_plus = load("res://mobile/race/race_bot_plus.gd")
+		var bot: RaceBot = _plus.new()
 		bot.name = "RaceBot"
 		bot.track = old.track
 		bot.pace = old.pace
