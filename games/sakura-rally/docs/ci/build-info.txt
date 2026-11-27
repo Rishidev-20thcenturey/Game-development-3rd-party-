@@ -1,10 +1,10 @@
 apk: SakuraRally-v1.0.0.apk
-size_bytes: 87681268
-sha256: a747fabed87d6c82843c5b03e99195874aa30805f0450ba953518de3e9fdcb81
+size_bytes: 87685364
+sha256: 23ec022052632b5c566a82ae76ffabd6c2386bf7e633bec6bfbc46463fc642db
 signing: preview key (Actions cache)
 upstream: SummerEngine/sakura-rally@4c2da60c79922a2028752221225577f504aeca46
 godot: 4.7.2-stable
-source_commit: 2c4a19902bb5b597741755ab05a99b81a92860da
+source_commit: 3b13c70572de2a4d794cafe6a49033f0cb0598ed
 mobile_check: 60 ok, 0 failed
 upstream_flows: 31 ok, 0 failed
 rendered_check: 66 ok, 0 failed
