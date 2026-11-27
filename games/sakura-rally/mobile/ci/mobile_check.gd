@@ -392,7 +392,7 @@ func _race_checks() -> void:
 		plus += int(bot != null and str(bot.get_script().resource_path).ends_with("race_bot_plus.gd"))
 	_check(director != null, "race: the race director joined the race")
 	_check(rivals.size() == 6 and plus == rivals.size(), "race: six rivals racing with race_bot_plus.gd (%d/%d)" % [plus, rivals.size()])
-	await shot("08_race_grid")
+	await shot("11_race_grid")
 	var car: Car = game.player_car
 	var driver := RaceBot.new()
 	driver.name = "RaceBot"
@@ -423,7 +423,7 @@ func _race_checks() -> void:
 			car_ms += float(st.get("car_ms", 0.0))
 			n += 1
 		if t == minf(12.0, t_end - 3.0):
-			await shot("09_race_pack")
+			await shot("12_race_pack")
 	var meter := str(perf._meter.text).replace("\n", " | ") if perf != null else ""
 	_log("RACE %d s: most rivals on rails at once %d, sleeps %d, wakes %d, cars' physics %.2f ms per tick (mean of the meter), meter: %s" % [
 			int(t_end), most_asleep, int(director.get(&"sleeps")) if director != null else -1,
@@ -433,7 +433,7 @@ func _race_checks() -> void:
 	for e: Variant in race.entrants:
 		placed += int(int(e.position) > 0)
 	_check(placed == 7, "race: seven cars classified (%d)" % placed)
-	await shot("10_race_meter")
+	await shot("13_race_meter")
 	if perf != null:
 		perf.meter_on = false
 	if is_instance_valid(driver):

@@ -150,7 +150,7 @@ jobs:
           set -o pipefail
           sudo apt-get update -qq && sudo apt-get install -y -qq mesa-vulkan-drivers xvfb > /dev/null
           mkdir -p "$OUT/shots"
-          timeout 3000 xvfb-run -a -s "-screen 0 1600x720x24" godot --rendering-method mobile --fixed-fps 30 \
+          timeout 3300 xvfb-run -a -s "-screen 0 1600x720x24" godot --rendering-method mobile --fixed-fps 30 \
             --disable-crash-handler --path "$PROJ" -s res://mobile/ci/mobile_check.gd -- --touch "out=$OUT/shots" \
             2>&1 | tee render.log | grep -E "CHECK|SUMMARY|SHOT|FAIL|ERROR|TIMEOUT"
           ls -la "$OUT/shots"
