@@ -11,7 +11,7 @@ extends Node
 ##   * maps the Android Back button onto the game's own flow: pause while driving, back out
 ##     of menus, resume from pause, and quit from the title hub;
 ##   * pauses a drive and releases every held control when the app goes to the background;
-##   * shows a performance meter (tap it for the performance lab, perf_lab.gd);
+##   * runs the phone optimisations in perf_lab.gd (its fps meter and lab exist only in CI);
 ##   * on every platform, adds the race director (race/race_director.gd) to each race.
 ## Upstream scripts are not modified. Everything here goes through the public Game API, the
 ## InputMap actions and ui_cancel, the same paths the keyboard and gamepad already use.
@@ -28,7 +28,7 @@ const PAUSE_SCALE := 1.45
 
 var touch_enabled := false
 var controls: TouchControls
-## Performance meter + lab (perf_lab.gd). The meter is shown by default on phones only.
+## Phone optimisations (perf_lab.gd); its fps meter and lab exist only in CI / `--perf` runs.
 var perf: PerfLab
 
 var _hud_done := false
@@ -53,7 +53,9 @@ func _ready() -> void:
 	add_child(controls)
 	perf = PerfLab.new()
 	perf.name = "PerfLab"
-	perf.setup(self, OS.has_feature("mobile") or args.has("--perf"))
+	# The fps meter and lab are for testing only: off in the released game (phones), on in CI.
+	var with_meter := args.has("--perf") or not OS.has_feature("mobile")
+	perf.setup(self, args.has("--perf"), with_meter)
 	add_child(perf)
 	get_tree().node_added.connect(_on_node_added)
 

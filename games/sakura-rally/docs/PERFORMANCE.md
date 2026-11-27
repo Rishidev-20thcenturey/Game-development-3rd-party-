@@ -175,11 +175,17 @@ Reaching 120 fps needs two things.
 
 ---
 
-## 8. Performance meter and lab (in the APK)
+## 8. Performance meter and lab (testing only)
 
-`mobile/perf_lab.gd`, shown on phones.
+`mobile/perf_lab.gd`. It was shown on phones while the game was being tuned on the test tablet.
+That tuning reached about 45 fps on Low, 35 on Medium and 30 on High on the Snapdragon 8 Gen 1
+tablet in a full race. **The released APK no longer has it:** no meter, no lab and no frame or
+physics-tick timing. Only the optimisations run there: auto resolution, hidden-object culling, the
+High-preset tuning, the fast ink pass and the physics catch-up limit. The meter and lab still
+exist in CI runs (desktop builds, or `-- --perf`), where `mobile_check.gd` tests them and also
+checks that the released setup builds neither.
 
-**The meter** sits in the top-right corner and shows:
+**The meter** (CI / `--perf` only) sits in the top-right corner and shows:
 - fps, frame time and the worst frame;
 - **CPU** time split into scripts, physics × steps per frame and render submission;
 - **GPU** time;

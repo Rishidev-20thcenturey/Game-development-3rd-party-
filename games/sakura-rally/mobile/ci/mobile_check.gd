@@ -312,6 +312,17 @@ func _perf_lab_checks() -> void:
 	_check(perf.drs_decide(0.46, 60.0, 0.45, 0.71, 16.67) == 0.45, "auto resolution never goes below its floor")
 	await _seconds(0.4)
 	_check(not bool(game.paused) and not bool(perf._panel.visible), "lab closed, drive resumed")
+	# The released game (phones): the same optimisations, no fps meter, no lab, no timing.
+	var shipped: Node = (perf.get_script() as GDScript).new()
+	shipped.setup(mobile, true, false)
+	mobile.add_child(shipped)
+	await _frames(3)
+	_check(shipped.get_child_count() == 0 and shipped.get(&"_meter") == null and shipped.get(&"_panel") == null
+			and not shipped.is_physics_processing() and not bool(shipped.get(&"meter_on")) and Engine.max_fps == 0,
+			"released game: no fps meter, no lab and no per-tick timing (%d nodes)" % shipped.get_child_count())
+	mobile.remove_child(shipped)
+	shipped.free()
+	await _frames(2)
 
 
 ## Load census: draws and triangles of the main and shadow passes on every preset, what each

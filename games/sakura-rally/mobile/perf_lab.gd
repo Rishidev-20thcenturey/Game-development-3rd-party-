@@ -1,7 +1,8 @@
 extends CanvasLayer
 ## Sakura Rally: performance meter and lab (Game-development-3rd-party, MIT).
 ##
-## Added by mobile.gd on phones (and in CI). Two parts:
+## Added by mobile.gd on phones (and in CI). In the released game only the optimisations run
+## (see `instrumented`); the meter and lab below exist only in CI and `-- --perf` runs. Two parts:
 ##   * the meter: one tap-able strip in the top-right corner with fps, frame time, CPU time
 ##     (game logic, physics, render submission), GPU time, the limiting side, draw calls,
 ##     triangles, the 3D resolution, the screen refresh rate and the quality preset;
@@ -168,18 +169,33 @@ var _drs_prev_frame_ms := 0.0
 var _drs_failures := 0
 var _drs_cooldown := 0.0
 var tuned_count := 0
+## False in the released game: no meter, no lab and no frame/physics timing, only the
+## optimisations (auto resolution, hidden-object culling, preset tuning, fast ink, physics
+## catch-up limit). True for CI and `-- --perf` runs.
+var instrumented := true
 
 
-func setup(mobile: Node, meter_default: bool) -> void:
+func setup(mobile: Node, meter_default: bool, with_meter := true) -> void:
 	_mobile = mobile
-	meter_on = meter_default
-	_load()
+	instrumented = with_meter
+	meter_on = meter_default and with_meter
+	if instrumented:
+		_load()
 
 
 func _ready() -> void:
 	layer = 90
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	process_priority = LAST
+	if OS.has_feature("mobile"):
+		Engine.max_physics_steps_per_frame = MAX_PHYSICS_STEPS
+	# auto resolution reads the GPU time, so the viewport keeps measuring it
+	_vp_rid = get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(_vp_rid, true)
+	if not instrumented:
+		set_physics_process(false)
+		_apply_cap()
+		return
 	_stamp = Stamp.new()
 	_stamp.name = "PerfStamp"
 	_stamp.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -187,10 +203,6 @@ func _ready() -> void:
 	_stamp.process_physics_priority = FIRST
 	process_physics_priority = LAST
 	add_child(_stamp)
-	if OS.has_feature("mobile"):
-		Engine.max_physics_steps_per_frame = MAX_PHYSICS_STEPS
-	_vp_rid = get_viewport().get_viewport_rid()
-	RenderingServer.viewport_set_measure_render_time(_vp_rid, true)
 	_build_meter()
 	_build_panel()
 	_apply_cap()
@@ -350,6 +362,8 @@ func _on_meter_pressed() -> void:
 
 
 func _update_visibility() -> void:
+	if not instrumented:
+		return
 	var driving: bool = _mobile != null and _mobile.is_driving()
 	_panel.visible = lab_open and not driving
 	# While the lab is open the meter stays visible even if hidden, so the numbers can be read.
@@ -603,7 +617,7 @@ var _cb_n := 0
 ## The lab runs last among the physics callbacks: the time since the stamp's first callback is
 ## the game's own _physics_process work for this tick.
 func _physics_process(_delta: float) -> void:
-	if _stamp.tick_start > 0:
+	if _stamp != null and _stamp.tick_start > 0:
 		_cb_sum += Time.get_ticks_usec() - _stamp.tick_start
 		_cb_n += 1
 
@@ -631,9 +645,11 @@ func _rails_count() -> int:
 
 
 func _process(delta: float) -> void:
-	var logic_ms := 0.0 if _stamp.usec == 0 else maxf(Time.get_ticks_usec() - _stamp.usec, 0) / 1000.0
+	var logic_ms := 0.0 if _stamp == null or _stamp.usec == 0 else maxf(Time.get_ticks_usec() - _stamp.usec, 0) / 1000.0
 	_drs_step(delta)
 	_enforce()
+	if not instrumented:
+		return
 	_update_visibility()
 	var ms := delta * 1000.0
 	_acc["t"] += delta
