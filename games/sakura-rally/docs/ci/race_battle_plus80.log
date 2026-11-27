@@ -1,0 +1,18 @@
+COST decision: network 187 us + racing 84 us per bot; 6 bots on 6 phases -> 135 us per tick on average
+BOT run=1 grid=1 bot1 car=sakura pace=0.750 finish=5 laps=125.48,122.67 cal=125.04,122.97 overtakes=0 contacts=2 worst=525 Ns (0.42 m/s, bumped 0.08) rescues=0 flips=0 off=4.7 s wander=6.9 m held=6.6 s
+BOT run=1 grid=2 bot2 car=hayate pace=0.776 finish=6 laps=125.93,122.67 cal=123.57,120.25 overtakes=0 contacts=3 worst=256 Ns (0.20 m/s, bumped 0.05) rescues=0 flips=0 off=7.3 s wander=6.3 m held=47.6 s
+BOT run=1 grid=3 bot3 car=sakura pace=0.802 finish=3 laps=119.57,115.57 cal=118.21,115.68 overtakes=2 contacts=2 worst=103 Ns (0.08 m/s, bumped 0.00) rescues=0 flips=0 off=2.0 s wander=7.0 m held=15.6 s
+BOT run=1 grid=4 bot4 car=hayate pace=0.828 finish=4 laps=120.21,115.36 cal=117.19,113.37 overtakes=3 contacts=0 worst=0 Ns (0.00 m/s, bumped 0.00) rescues=0 flips=0 off=1.9 s wander=7.6 m held=35.5 s
+BOT run=1 grid=5 bot5 car=sakura pace=0.854 finish=1 laps=115.55,109.49 cal=112.37,109.40 overtakes=4 contacts=3 worst=525 Ns (0.42 m/s, bumped 0.08) rescues=0 flips=0 off=1.0 s wander=7.3 m held=22.2 s
+BOT run=1 grid=6 bot6 car=hayate pace=0.880 finish=2 laps=120.00,112.44 cal=111.83,107.54 overtakes=5 contacts=4 worst=256 Ns (0.20 m/s, bumped 0.05) rescues=0 flips=0 off=4.3 s wander=7.4 m held=56.0 s
+RACE run=1 route=hanami laps=2 finished=6/6 flips=0 rescues=0 overtakes=14 contacts=7 worst=525 Ns (0.42 m/s, bumped 0.08) off=21.3 s
+COST decision: network 181 us + racing 84 us per bot; 6 bots on 6 phases -> 133 us per tick on average
+BOT run=2 grid=1 bot1 car=sakura pace=0.750 finish=4 laps=125.18,123.00 cal=125.04,122.97 overtakes=0 contacts=9 worst=1531 Ns (1.22 m/s, bumped 0.24) rescues=0 flips=0 off=2.1 s wander=7.7 m held=5.0 s
+BOT run=2 grid=2 bot2 car=hayate pace=0.776 finish=6 laps=126.89,126.26 cal=123.57,120.25 overtakes=1 contacts=6 worst=7550 Ns (6.04 m/s, bumped 1.44) rescues=0 flips=0 off=8.2 s wander=6.3 m held=16.0 s
+BOT run=2 grid=3 bot3 car=sakura pace=0.802 finish=5 laps=125.63,124.84 cal=118.21,115.68 overtakes=7 contacts=10 worst=7550 Ns (6.04 m/s, bumped 1.21) rescues=1 flips=0 off=1.9 s wander=7.7 m held=100.9 s
+BOT run=2 grid=4 bot4 car=hayate pace=0.828 finish=3 laps=126.05,118.29 cal=117.19,113.37 overtakes=4 contacts=4 worst=1286 Ns (1.03 m/s, bumped 0.18) rescues=0 flips=0 off=4.8 s wander=7.6 m held=67.6 s
+BOT run=2 grid=5 bot5 car=sakura pace=0.854 finish=1 laps=116.80,109.36 cal=112.37,109.40 overtakes=4 contacts=5 worst=1373 Ns (1.10 m/s, bumped 0.22) rescues=0 flips=0 off=2.0 s wander=7.1 m held=27.4 s
+BOT run=2 grid=6 bot6 car=hayate pace=0.880 finish=2 laps=125.83,110.96 cal=111.83,107.54 overtakes=9 contacts=6 worst=1310 Ns (1.05 m/s, bumped 0.25) rescues=0 flips=0 off=3.9 s wander=7.4 m held=76.9 s
+RACE run=2 route=hanami laps=2 finished=6/6 flips=0 rescues=1 overtakes=25 contacts=20 worst=7550 Ns (6.04 m/s, bumped 1.44) off=22.9 s
+SUMMARY route=hanami runs=2 laps=2 finished=12/12 flips=0 rescues/race=0.50 overtakes/race=19.5 contacts/race=13.5 worst=7550 Ns (6.04 m/s, bumped 1.44) finish_area_contacts/race=2.5 lap_err lap1 median=3.32 mean=4.72 max=14.00 s within_2s=3/12 flying median=2.42 mean=2.78 max=9.17 s within_2s=6/12 off=22.1 s/race
+COST physics tick mean=5544 us max=3121276 us over 60210 ticks

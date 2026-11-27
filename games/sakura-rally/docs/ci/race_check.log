@@ -1,29 +1,31 @@
 CHECK ok    driver policy loads
-POLICY batched network: worst logit difference 2.86102294921875e-06, same options 400/400, 1091 us -> 122 us per evaluation (8.9x)
+POLICY batched network: worst logit difference 2.86102294921875e-06, same options 400/400, 919 us -> 100 us per evaluation (9.2x)
 CHECK ok    batched network: logits match DrivePolicy (worst 2.86102294921875e-06)
 CHECK ok    batched network: the same options (400/400)
-CHECK ok    batched network: faster (122 vs 1091 us)
+CHECK ok    batched network: faster (100 vs 919 us)
 CHECK ok    race off: a race director, rails off
 CHECK ok    race off: every rival races with race_bot_plus.gd (6/6)
 CHECK ok    race off: the rivals decide in 6 different ticks ([0, 2, 4, 6, 8, 10])
-RACE off: rival paces from pole 0.602, 0.658, 0.684, 0.724, 0.741, 0.772
-RACE off: 306.5 s, 36776 ticks: physics tick 3880 us (whole engine, headless), cars' physics 1769 us per tick, rails 0% of rival ticks, 0 sleeps, 0 wakes (0 went wrong), rescues 1, flips 0, places gained on track 43, attack 8404 / draft 3804 / defend 181 decisions
-RACE off: classification 1 Aoi Fujimura 4:34.026 | 2 Ren Takeda 4:34.489 | 3 Kenji Hayashi 4:41.304 | 4 Mei Sakamoto 4:46.294 | 5 Daichi Ono 4:55.554 | 6 You 4:56.096 | 7 Hana Kobayashi 5:05.377
+RACE off: rival paces from pole 0.750, 0.776, 0.802, 0.828, 0.854, 0.880
+CHECK ok    race off: the field runs at 0.75-0.88 of the driver's speed (0.750-0.880)
+RACE off: 279.8 s, 33575 ticks: physics tick 2920 us (whole engine, headless), cars' physics 1330 us per tick, rails 0% of rival ticks, 0 sleeps, 0 wakes (0 went wrong), rescues 0, flips 0, places gained on track 30, attack 7562 / draft 3363 / defend 34 decisions
+RACE off: classification 1 Aoi Fujimura 3:53.021 | 2 Mei Sakamoto 4:03.888 | 3 Ren Takeda 4:13.419 | 4 Kenji Hayashi 4:15.733 | 5 Hana Kobayashi 4:16.849 | 6 Daichi Ono 4:17.713 | 7 You 4:39.806
 CHECK ok    race off: every rival finished (6/6)
 CHECK ok    race off: every car woken from rails drove on (0 of 0 went wrong)
 CHECK ok    race off: no rival on rails (0)
 CHECK ok    race on: a race director, rails on
 CHECK ok    race on: every rival races with race_bot_plus.gd (6/6)
 CHECK ok    race on: the rivals decide in 6 different ticks ([0, 2, 4, 6, 8, 10])
-RACE on: rival paces from pole 0.602, 0.658, 0.684, 0.724, 0.741, 0.772
-RACE on: 302.6 s, 36317 ticks: physics tick 3135 us (whole engine, headless), cars' physics 1209 us per tick, rails 38% of rival ticks, 44 sleeps, 43 wakes (0 went wrong), rescues 0, flips 0, places gained on track 137, attack 5216 / draft 2055 / defend 78 decisions
-RACE on: classification 1 Aoi Fujimura 4:24.693 | 2 Mei Sakamoto 4:36.345 | 3 Ren Takeda 4:36.804 | 4 Kenji Hayashi 4:36.816 | 5 Daichi Ono 4:46.428 | 6 You 4:47.011 | 7 Hana Kobayashi 5:01.553
-RACE on: rail speed scale per rival (rail lap / calibrated lap, 0 = never slept) 1.038, 0.000, 1.034, 1.026, 1.034, 1.025
+RACE on: rival paces from pole 0.750, 0.776, 0.802, 0.828, 0.854, 0.880
+CHECK ok    race on: the field runs at 0.75-0.88 of the driver's speed (0.750-0.880)
+RACE on: 278.6 s, 33432 ticks: physics tick 1849 us (whole engine, headless), cars' physics 537 us per tick, rails 71% of rival ticks, 37 sleeps, 37 wakes (0 went wrong), rescues 0, flips 0, places gained on track 116, attack 2358 / draft 930 / defend 37 decisions
+RACE on: classification 1 Hana Kobayashi 4:16.203 | 2 Mei Sakamoto 4:16.629 | 3 Daichi Ono 4:16.848 | 4 Aoi Fujimura 4:17.064 | 5 Kenji Hayashi 4:17.264 | 6 Ren Takeda 4:17.525 | 7 You 4:38.610
+RACE on: rail speed scale per rival (rail lap / calibrated lap, 0 = never slept) 1.034, 1.025, 1.034, 1.026, 1.036, 1.029
 CHECK ok    race on: every rival finished (6/6)
-CHECK ok    race on: every car woken from rails drove on (0 of 43 went wrong)
-CHECK ok    race on: rivals went on rails and came back (44 sleeps, 43 wakes)
-RACE compare: physics tick 3880 -> 3135 us (-19%), cars' physics 1769 -> 1209 us per tick (-32%), rails 38% of rival ticks
-CHECK ok    rails: the cars' physics costs less per tick (1209 vs 1769 us)
+CHECK ok    race on: every car woken from rails drove on (0 of 37 went wrong)
+CHECK ok    race on: rivals went on rails and came back (37 sleeps, 37 wakes)
+RACE compare: physics tick 2920 -> 1849 us (-37%), cars' physics 1330 -> 537 us per tick (-60%), rails 71% of rival ticks
+CHECK ok    rails: the cars' physics costs less per tick (537 vs 1330 us)
 CHECK ok    rails: no more flips than without (0 vs 0)
-SUMMARY race_check: 18 checks, 0 failed
-ERROR: 21 resources still in use at exit (run with --verbose for details).
+SUMMARY race_check: 20 checks, 0 failed
+ERROR: 22 resources still in use at exit (run with --verbose for details).
