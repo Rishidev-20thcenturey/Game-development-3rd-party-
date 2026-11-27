@@ -130,9 +130,9 @@ func _policy_checks() -> void:
 	for obs in samples:
 		fast.logits(obs)
 	var fast_us := (Time.get_ticks_usec() - t0) / float(n)
-	print("POLICY batched network: worst logit difference %.2e, same options %d/%d, %.0f us -> %.0f us per evaluation (%.1fx)" % [
-			worst, agree, n, plain_us, fast_us, plain_us / maxf(fast_us, 0.001)])
-	_check(worst < 1e-3, "batched network: logits match DrivePolicy (worst %.2e)" % worst)
+	print("POLICY batched network: worst logit difference %s, same options %d/%d, %.0f us -> %.0f us per evaluation (%.1fx)" % [
+			String.num_scientific(worst), agree, n, plain_us, fast_us, plain_us / maxf(fast_us, 0.001)])
+	_check(worst < 1e-3, "batched network: logits match DrivePolicy (worst %s)" % String.num_scientific(worst))
 	_check(agree >= n - 2, "batched network: the same options (%d/%d)" % [agree, n])
 	_check(fast_us < plain_us * 0.6, "batched network: faster (%.0f vs %.0f us)" % [fast_us, plain_us])
 
@@ -223,6 +223,7 @@ func _race(rails: bool) -> Dictionary:
 			var asleep := not r.can_process()
 			if bool(was_asleep.get(id, false)) and not asleep:
 				woken += 1
+				hints.erase(id) # it moved on rails: a full search, not one round the old spot
 				watch.append({"car": r, "until": t + 3.0, "from": t, "ok": true, "why": ""})
 			was_asleep[id] = asleep
 			var is_rolled := r.global_basis.y.y < 0.2

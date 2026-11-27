@@ -182,14 +182,17 @@ func _run() -> void:
 	_check(int(game.state) == int(game.State.RACING) and bool(controls.active), "time trial racing with touch controls")
 	await _census_checks()
 
-	# ------------------------------------------------------------ race mode
-	await _race_checks()
-
 	# ------------------------------------------------------------ back to the menu
 	game.request_menu()
 	await _until(func() -> bool: return int(game.state) == int(game.State.MENU), 60.0)
 	await _seconds(1.0)
 	_check(not bool(controls.active), "controls hidden again on the menu")
+
+	# ------------------------------------------------------------ race mode, from the menu
+	await _race_checks()
+	game.request_menu()
+	await _until(func() -> bool: return int(game.state) == int(game.State.MENU), 60.0)
+	await _seconds(1.0)
 
 	# ------------------------------------------------------------ campaign started by a tap
 	await _until(func() -> bool: return not bool(main.ui.title._switching), 20.0)
@@ -381,6 +384,11 @@ func _census_checks() -> void:
 ## shows it), and a shot of the pack.
 func _race_checks() -> void:
 	game.request_start(opts["map"], game.MODE_RACE)
+	if _NAN_WATCH == null:
+		_NAN_WATCH = GDScript.new()
+		_NAN_WATCH.source_code = _NAN_WATCH_SRC
+		_NAN_WATCH.reload()
+	var watch := _nan_watch()
 	await _until(func() -> bool: return main.race != null and _on_grid(), 90.0)
 	await _seconds(0.6)
 	var race: Node = main.race
@@ -422,6 +430,10 @@ func _race_checks() -> void:
 			var st: Dictionary = perf.stats
 			car_ms += float(st.get("car_ms", 0.0))
 			n += 1
+		var cam3 := root.get_camera_3d()
+		_log("RACE t=%2.0f state=%s camera %s (%s) at %s, fov %.0f" % [t, (game.State as Dictionary).find_key(game.state),
+				cam3.name if cam3 != null else "none", cam3.get_class() if cam3 != null else "", str(cam3.global_position.round()) if cam3 != null else "",
+				cam3.fov if cam3 != null else 0.0])
 		if t == minf(12.0, t_end - 3.0):
 			await shot("12_race_pack")
 	var meter := str(perf._meter.text).replace("\n", " | ") if perf != null else ""
@@ -438,6 +450,45 @@ func _race_checks() -> void:
 		perf.meter_on = false
 	if is_instance_valid(driver):
 		driver.queue_free()
+	watch.set_meta(&"stop", true)
+	_check(str(watch.get_meta(&"first", "")) == "", "race: camera and cars never NaN %s" % str(watch.get_meta(&"first", "")))
+
+
+## A node that checks every frame (through the race) that the current camera and every car have
+## finite positions, and logs the first frame one does not: which node, its class, the state.
+func _nan_watch() -> Node:
+	var w := Node.new()
+	w.name = "NanWatch"
+	w.process_mode = Node.PROCESS_MODE_ALWAYS
+	w.set_script(_NAN_WATCH)
+	root.add_child(w)
+	w.set_meta(&"check", self)
+	return w
+
+
+const _NAN_WATCH_SRC := """extends Node
+var frames := 0
+func _process(_d: float) -> void:
+	if get_meta(&"stop", false):
+		queue_free()
+		return
+	frames += 1
+	var bad := ""
+	var cam := get_viewport().get_camera_3d()
+	if cam != null and not cam.global_transform.origin.is_finite():
+		bad = "camera %s (%s, parent %s)" % [cam.name, cam.get_class(), cam.get_parent().name]
+	var g := get_node(^"/root/Game")
+	var cars: Array = get_tree().get_nodes_in_group(&"race_rival")
+	if g.player_car != null:
+		cars.append(g.player_car)
+	for c in cars:
+		if is_instance_valid(c) and not (c as Node3D).global_position.is_finite():
+			bad += " car %s (process %s)" % [c.name, (c as Node).can_process()]
+	if bad != "" and not has_meta(&"first"):
+		set_meta(&"first", "frame %d state %s: %s" % [frames, (g.State as Dictionary).find_key(g.state), bad])
+		print("NAN first: ", get_meta(&"first"))
+"""
+static var _NAN_WATCH: GDScript = null
 
 
 ## The two exact-look levers (hidden-object culling, fast ink pass): what each saves on every
