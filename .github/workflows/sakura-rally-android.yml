@@ -109,18 +109,13 @@ jobs:
 
       - name: Compile check (mobile layer scripts)
         run: |
-          fail=0
-          for f in $(cd "$PROJ" && find mobile -name '*.gd' | sort); do
-            if ! out=$(timeout 180 godot --headless --path "$PROJ" --check-only -s "res://$f" 2>&1) \
-                || echo "$out" | grep -qE "Parse Error|Compile Error"; then
-              echo "::error title=compile $f::$(echo "$out" | grep -E 'ERROR|Error|error' | head -5 | tr '\n' ' ')"
-              echo "$out" | tail -20
-              fail=1
-            else
-              echo "ok  $f"
-            fi
-          done
-          exit $fail
+          set -o pipefail
+          timeout 300 godot --headless --disable-crash-handler --audio-driver Dummy --path "$PROJ" \
+            -s res://mobile/ci/compile_check.gd 2>&1 | tee compile.log | grep -E "COMPILE|SUMMARY|Parse Error|Compile Error"
+          if grep -E "COMPILE FAIL|Parse Error|Compile Error" compile.log; then
+            grep -E "Parse Error|Compile Error" compile.log | head -5 | while read -r l; do echo "::error title=compile::$l"; done
+            exit 1
+          fi
 
       - name: Touch layer check (headless)
         continue-on-error: true
