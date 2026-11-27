@@ -54,11 +54,13 @@ const RAIL_SAME_LANE_M := 2.4
 const RAIL_LANE_RATE := 1.2
 const CAR_LENGTH := 4.3
 ## Two cars level in different lanes (within this many metres of road): no car goes on rails
-## beside another, and a car on rails beside one settles it, ALONGSIDE_K faster when level or
-## ahead, as much slower when behind (two cars at the same average pace would otherwise run level
-## and swap places in the running order tick after tick).
+## beside another, and a car on rails beside one at matched pace settles the pair by the running
+## order, ALONGSIDE_K faster when it is ahead, as much slower when behind (two cars at the same
+## average pace would otherwise run level and swap places in the running order tick after tick).
 const ALONGSIDE_M := CAR_LENGTH + 3.0
 const ALONGSIDE_K := 0.04
+## Only when their speeds match this closely (m/s); a clearly faster car just passes.
+const ALONGSIDE_MATCH_MPS := 1.5
 ## Ground height under a car on rails: a ray every GROUND_TICKS ticks, smoothed.
 const GROUND_TICKS := 6
 ## How often sleep / wake is decided (ticks).
@@ -384,14 +386,15 @@ func _rail_step(r: Rival, delta: float) -> void:
 		var ds := track.abs_s(o.idx, op) - r.s
 		if track.closed:
 			ds = wrapf(ds, -track.length * 0.5, track.length * 0.5)
-		if absf(ds) < ALONGSIDE_M and not o.finished:
-			settle = 1.0 - ALONGSIDE_K if ds > 0.5 else 1.0 + ALONGSIDE_K
+		var ov := maxf(o.car.linear_velocity.dot(track.forward(o.idx)), 0.0)
+		if absf(ds) < ALONGSIDE_M and not o.finished and r.entrant != null and absf(limit - ov) < ALONGSIDE_MATCH_MPS:
+			# matched pace alongside: keep the running order (both cars agree who is ahead)
+			settle = 1.0 + ALONGSIDE_K if r.entrant.position < o.position else 1.0 - ALONGSIDE_K
 		if ds <= 0.0 or ds > RAIL_LOOK_M:
 			continue
 		var olat := track.lateral(o.idx, op)
 		if absf(olat - r.lat) > RAIL_SAME_LANE_M:
 			continue
-		var ov := maxf(o.car.linear_velocity.dot(track.forward(o.idx)), 0.0)
 		var c := ov + (ds - CAR_LENGTH - RAIL_FOLLOW_M) * 0.8
 		if c < cap:
 			cap = c
@@ -407,7 +410,7 @@ func _rail_step(r: Rival, delta: float) -> void:
 	elif is_nan(blocker_lat) and absf(r.lat_target) > 0.01 and _rail_side_clear(r, 0.0):
 		r.lat_target = 0.0
 	r.lat_target = clampf(r.lat_target, -room, room)
-	var target := maxf(minf(limit * settle, cap), 0.0)
+	var target := maxf(minf(limit, cap) * settle, 0.0)
 	r.v = minf(target, r.v + RAIL_ACCEL * delta) if r.v < target else maxf(target, r.v - RAIL_DECEL * delta)
 	r.s += r.v * delta
 	r.s = fposmod(r.s, track.length) if track.closed else clampf(r.s, track.first_s, track.last_s)

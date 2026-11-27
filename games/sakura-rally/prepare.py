@@ -3,7 +3,7 @@
 
     python3 games/sakura-rally/prepare.py <path-to-upstream-checkout>
 
-It changes two lines of upstream scripts (PATCHES below: the race bot, a menu fix) and otherwise only:
+It changes a few lines of upstream scripts (PATCHES below: the race bot, a menu fix, faster loading) and otherwise only:
   * copies mobile/ (autoload, touch controls, race layer, CI checks) and the launcher icons into
     res://mobile/;
   * adds the `Mobile` autoload and the Android-specific project settings to project.godot. Each
@@ -50,6 +50,31 @@ PATCHES = [
     ("scripts/ui/screens/time_attack_panel.gd",
      "\tUIMotion.layout_now(self)\n\tvar d := delay\n",
      "\tUIMotion.layout_now(self)\n\t_cards_row.modulate.a = 1.0\n\tvar d := delay\n"),
+    # Faster loading, same world. Jolt rebuilds a body's whole compound shape on every shape added
+    # (and every shape transform set) while the body is in the physics space, so filling a body
+    # that is already in the tree costs O(n^2): 220 terrain pieces, about 27k prop colliders in
+    # chunk bodies, 903 barrier boxes. Each body is filled first and enters the tree once, in the
+    # same place among its siblings.
+    ("scripts/world/map_world.gd",
+     "\tterrain_body.set_meta(&\"surface\", &\"grass\")\n\tadd_child(terrain_body)\n",
+     "\tterrain_body.set_meta(&\"surface\", &\"grass\")\n"),
+    ("scripts/world/map_world.gd",
+     "\tstats[\"tris_static\"] = tris\n",
+     "\tadd_child(terrain_body)\n\tmove_child(terrain_body, terrain_root.get_index() + 1)\n"
+     "\tstats[\"tris_static\"] = tris\n"),
+    ("scripts/world/map_world.gd",
+     "\tprops_root.name = \"Props\"\n\tadd_child(props_root)\n",
+     "\tprops_root.name = \"Props\"\n"),
+    ("scripts/world/map_world.gd",
+     "\tstats[\"instances\"] = total\n",
+     "\tadd_child(props_root)\n\tstats[\"instances\"] = total\n"),
+    ("scripts/world/map_world.gd",
+     "\tbody.set_meta(&\"surface\", &\"tarmac\")\n\tadd_child(body)\n\tfor b in boxes:\n",
+     "\tbody.set_meta(&\"surface\", &\"tarmac\")\n\tfor b in boxes:\n"),
+    ("scripts/world/map_world.gd",
+     "\t\tbody.shape_owner_set_transform(owner_id, Transform3D(Basis(Vector3.UP, b[6]), Vector3(b[0], b[1], b[2])))\n",
+     "\t\tbody.shape_owner_set_transform(owner_id, Transform3D(Basis(Vector3.UP, b[6]), Vector3(b[0], b[1], b[2])))\n"
+     "\tadd_child(body)\n"),
 ]
 
 

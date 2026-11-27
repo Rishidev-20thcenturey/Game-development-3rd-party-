@@ -69,6 +69,7 @@ func _run() -> void:
 	mobile.handle_back()
 	await _seconds(1.5)
 	_log(_load_report())
+	_world_collision_check()
 	_load_benchmarks()
 
 	# ------------------------------------------------------------ free roam, driven by touch
@@ -853,6 +854,56 @@ func _load_report() -> String:
 	return "LOAD boot (ms since engine start, step by step): " + " | ".join(parts) + " | total %d ms" % prev
 
 
+## The loading patch fills the collision bodies before they enter the tree: the same shapes must
+## be there, and the physics space must see them (terrain, a tree trunk, a barrier).
+func _world_collision_check() -> void:
+	var map: Node = main.map
+	var terrain: StaticBody3D = map.get(&"terrain_body")
+	var props: Node = map.get_node_or_null(^"Props")
+	var barriers: StaticBody3D = map.get_node_or_null(^"Barriers")
+	var prop_shapes := 0
+	if props != null:
+		for b in props.get_children():
+			if b is StaticBody3D:
+				prop_shapes += (b as StaticBody3D).get_shape_owners().size()
+	var info: Dictionary = map.get(&"info")
+	var n_boxes: int = (info.get("collision_boxes", []) as Array).size()
+	var n_tri := 0
+	for d: Dictionary in info.get("meshes", []):
+		n_tri += int(str(d.get("collide", "none")) == "trimesh" and str(d.get("material", "")) == "terrain")
+	var stats: Dictionary = map.get(&"stats")
+	var counts_ok := terrain != null and terrain.is_inside_tree() and terrain.get_shape_owners().size() == n_tri \
+			and props != null and props.is_inside_tree() and prop_shapes == int(stats.get("prop_shapes", -1)) and prop_shapes > 20000 \
+			and barriers != null and barriers.is_inside_tree() and barriers.get_shape_owners().size() == n_boxes
+	_check(counts_ok, "world collision complete: terrain %d/%d pieces, props %d/%d shapes, barriers %d/%d boxes" % [
+			terrain.get_shape_owners().size() if terrain != null else -1, n_tri, prop_shapes, int(stats.get("prop_shapes", -1)),
+			barriers.get_shape_owners().size() if barriers != null else -1, n_boxes])
+	var space := (map as Node3D).get_world_3d().direct_space_state
+	# terrain under the route's spawn
+	var spawn: Transform3D = map.get(&"spawn")
+	var q := PhysicsRayQueryParameters3D.create(spawn.origin + Vector3.UP * 50.0, spawn.origin + Vector3.DOWN * 50.0, 0xFFFFFFFF)
+	var hit := space.intersect_ray(q)
+	# a barrier box centre and a tree trunk
+	var box: Array = (info.get("collision_boxes", [[0, 0, 0]]) as Array)[0]
+	var pq := PhysicsPointQueryParameters3D.new()
+	pq.position = Vector3(box[0], box[1], box[2])
+	pq.collision_mask = 0xFFFFFFFF
+	var box_hits := space.intersect_point(pq, 4)
+	var trunk_hits: Array = []
+	if props != null:
+		for b in props.get_children():
+			if b is StaticBody3D and (b as StaticBody3D).get_shape_owners().size() > 0:
+				var sb := b as StaticBody3D
+				var owner_id: int = sb.get_shape_owners()[0]
+				var xf := sb.shape_owner_get_transform(owner_id)
+				pq.position = xf.origin
+				trunk_hits = space.intersect_point(pq, 4)
+				break
+	_check(not hit.is_empty() and not box_hits.is_empty() and not trunk_hits.is_empty(),
+			"physics sees the world: ground under the spawn (%s), a barrier (%d), a tree trunk (%d)" % [
+			(hit.get("collider") as Node).name if not hit.is_empty() else "none", box_hits.size(), trunk_hits.size()])
+
+
 ## What the world build's bulk steps cost on this machine, one by one (CI only): reading and
 ## parsing the pack, 67k prop transforms, 27k prop collision shapes, terrain collision.
 func _load_benchmarks() -> void:
@@ -906,30 +957,39 @@ func _load_benchmarks() -> void:
 		mm.instance_count = list.size()
 		mm.buffer = buf
 	var t_buf := Time.get_ticks_usec() - t
-	# prop collision: one cylinder per tree, as MapWorld._add_prop_shapes, on a body in the tree
-	var body := StaticBody3D.new()
-	body.collision_layer = 0
-	body.collision_mask = 0
-	root.add_child(body)
-	var shapes := 0
-	t = Time.get_ticks_usec()
-	for prop_name: String in inst:
-		var list: Array = inst[prop_name]
-		for e: Array in list:
-			if shapes >= 25000:
-				break
-			var sc: float = e[4]
-			var shape := CylinderShape3D.new()
-			shape.radius = 0.3 * sc
-			shape.height = 4.0 * sc
-			var sub := body.create_shape_owner(body)
-			body.shape_owner_add_shape(sub, shape)
-			body.shape_owner_set_transform(sub, Transform3D(Basis(Vector3.UP, e[3]), Vector3(e[0], e[1] + 2.0, e[2])))
-			shapes += 1
+	# prop collision: 1500 cylinders on a body filled inside the physics space (as upstream did)
+	# and on one filled before it enters the tree (the patched build)
+	var t_in := 0
+	var t_out := 0
+	var shapes := 1500
+	for inside: bool in [true, false]:
+		var body := StaticBody3D.new()
+		body.collision_layer = 0
+		body.collision_mask = 0
+		if inside:
+			root.add_child(body)
+		t = Time.get_ticks_usec()
+		var k := 0
+		for prop_name: String in inst:
+			for e: Array in inst[prop_name]:
+				if k >= shapes:
+					break
+				var sc: float = e[4]
+				var shape := CylinderShape3D.new()
+				shape.radius = 0.3 * sc
+				shape.height = 4.0 * sc
+				var sub := body.create_shape_owner(body)
+				body.shape_owner_add_shape(sub, shape)
+				body.shape_owner_set_transform(sub, Transform3D(Basis(Vector3.UP, e[3]), Vector3(e[0], e[1] + 2.0, e[2])))
+				k += 1
+		if not inside:
+			root.add_child(body)
+		if inside:
+			t_in = Time.get_ticks_usec() - t
+		else:
+			t_out = Time.get_ticks_usec() - t
+		body.queue_free()
 	await physics_frame
-	await physics_frame
-	var t_shapes := Time.get_ticks_usec() - t
-	body.queue_free()
 	# terrain collision: trimesh shapes of the first 20 terrain chunks
 	var meshes := 0
 	var tris := 0
@@ -968,9 +1028,9 @@ func _load_benchmarks() -> void:
 	var trimesh_all := 0
 	for d: Dictionary in info["meshes"]:
 		trimesh_all += int(str(d.get("collide", "none")) == "trimesh")
-	_log("LOAD bench (this machine): read map.json %.0f ms, parse %.0f ms, read map.bin %.0f ms (%d MB) | %d prop transforms one by one %.0f ms, as buffers %.0f ms | %d collision cylinders %.0f ms | %d terrain trimesh shapes (%dk tris) %.0f ms, %d such meshes in the world" % [
+	_log("LOAD bench (this machine): read map.json %.0f ms, parse %.0f ms, read map.bin %.0f ms (%d MB) | %d prop transforms one by one %.0f ms, as buffers %.0f ms | %d collision cylinders on one body: filled in the space %.0f ms, filled then added %.0f ms | %d terrain trimesh shapes (%dk tris) %.0f ms, %d such meshes in the world" % [
 			t_read_json / 1000.0, t_parse / 1000.0, t_bin / 1000.0, bin.size() / 1048576, n, t_xf / 1000.0, t_buf / 1000.0,
-			shapes, t_shapes / 1000.0, meshes, tris / 1000, t_tri / 1000.0, trimesh_all])
+			shapes, t_in / 1000.0, t_out / 1000.0, meshes, tris / 1000, t_tri / 1000.0, trimesh_all])
 
 
 func _frames(n: int) -> void:
