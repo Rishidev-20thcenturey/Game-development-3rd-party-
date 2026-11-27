@@ -151,6 +151,8 @@ jobs:
           timeout 900 godot --headless --disable-crash-handler --fixed-fps 120 --audio-driver Dummy --path "$PROJ" \
             -s res://mobile/ci/race_battle.gd -- route=hanami runs=2 bot=plus pace=0.75,0.776,0.802,0.828,0.854,0.88 player=0.97 \
             2>&1 | tee race_battle_plus80.log | grep -E "^(RACE|SUMMARY|COST)" || true
+          grep -E '^(RACE|POLICY|SUMMARY)' race_check.log | grep -E 'flips|compare|: [0-9.]+ s,|POLICY|SUMMARY' | cut -c1-900 \
+            | sed 's/^/::notice title=race_check (early)::/' || true
 
       - name: Rendered previews (Mobile renderer, software Vulkan)
         continue-on-error: true

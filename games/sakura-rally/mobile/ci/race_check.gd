@@ -209,6 +209,8 @@ func _race(rails: bool) -> Dictionary:
 	var rescues := {}
 	var battle := {"attack": {}, "draft": {}, "defend": {}}
 	var gains := 0
+	var flip_last := {}
+	var flip_rec := {}
 	var last_pos := {}
 	var hints := {}
 	while meter.ticks - tick0 < limit_ticks:
@@ -222,6 +224,23 @@ func _race(rails: bool) -> Dictionary:
 				if e.position < lp and not e.finished:
 					gains += lp - e.position
 				last_pos[e.car.get_instance_id()] = e.position
+		# order flips per pair (who, with or without a car on rails, involving the player)
+		var ents: Array = race.entrants
+		for a in ents.size():
+			for b in range(a + 1, ents.size()):
+				var ea: RaceField.Entrant = ents[a]
+				var eb: RaceField.Entrant = ents[b]
+				if ea.finished or eb.finished:
+					continue
+				var key := "%s/%s" % [str(ea.info.get("name", "?")), str(eb.info.get("name", "?"))]
+				var ahead := ea.position < eb.position
+				if flip_last.has(key) and bool(flip_last[key]) != ahead:
+					var rec: Array = flip_rec.get(key, [0, 0, ea.player or eb.player, 0.0])
+					rec[0] += 1
+					rec[1] += int(not ea.car.can_process() or not eb.car.can_process())
+					rec[3] += absf(ea.car.global_position.distance_to(eb.car.global_position))
+					flip_rec[key] = rec
+				flip_last[key] = ahead
 		if all_done:
 			break
 		for r: Car in rivals:
@@ -290,6 +309,18 @@ func _race(rails: bool) -> Dictionary:
 			tag, ticks / float(Engine.physics_ticks_per_second), ticks, wall_us, car_us, 100.0 * rails_share, sleeps, woken, bad,
 			res["rescues"], flips, gains, sum.call(battle["attack"]), sum.call(battle["draft"]), sum.call(battle["defend"])])
 	print("RACE %s: classification %s" % [tag, " | ".join(rows)])
+	var keys := flip_rec.keys()
+	keys.sort_custom(func(x: String, y: String) -> bool: return int(flip_rec[x][0]) > int(flip_rec[y][0]))
+	var player_flips := 0
+	var total_flips := 0
+	for k: String in keys:
+		total_flips += int(flip_rec[k][0])
+		player_flips += int(flip_rec[k][0]) if bool(flip_rec[k][2]) else 0
+	var top := PackedStringArray()
+	for k: String in keys.slice(0, 4):
+		var rec: Array = flip_rec[k]
+		top.append("%s %d flips (%d with one on rails, %.1f m apart on average)" % [k, rec[0], rec[1], float(rec[3]) / maxf(float(rec[0]), 1.0)])
+	print("RACE %s: order flips %d, %d involving the player; most: %s" % [tag, total_flips, player_flips, " | ".join(top)])
 	if rails and director != null and is_instance_valid(director):
 		var scales := PackedStringArray()
 		for rv: Variant in director.get(&"rivals"):
