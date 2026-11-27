@@ -1,6 +1,11 @@
-SCRIPT ERROR: Compile Error: Identifier not found: Game
-SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
-ERROR: Failed to load script "res://mobile/ci/race_battle.gd" with error "Compilation failed".
-SCRIPT ERROR: Invalid call. Nonexistent function 'new' in base 'GDScript'.
-SCRIPT ERROR: Invalid access to property or key 'car' on a base object of type 'Dictionary'.
-ERROR: 5 resources still in use at exit (run with --verbose for details).
+COST decision: network 197 us + racing 109 us per bot; 7 bots on 7 phases -> 178 us per tick on average
+BOT run=1 grid=1 Hana car=hayate pace=0.608 finish=7 laps=154.94,151.79 cal=154.40,151.89 overtakes=1 contacts=2 worst=360 Ns (0.29 m/s, bumped 0.07) rescues=0 flips=0 off=6.1 s wander=7.5 m held=6.3 s
+BOT run=1 grid=2 Daichi car=sakura pace=0.651 finish=6 laps=142.23,140.73 cal=142.74,140.68 overtakes=1 contacts=1 worst=1941 Ns (1.55 m/s, bumped 0.31) rescues=0 flips=0 off=4.6 s wander=7.2 m held=4.0 s
+BOT run=1 grid=3 Mei car=hayate pace=0.689 finish=5 laps=139.01,134.17 cal=137.62,134.46 overtakes=2 contacts=2 worst=792 Ns (0.63 m/s, bumped 0.15) rescues=0 flips=0 off=5.1 s wander=7.5 m held=20.3 s
+BOT run=1 grid=4 Kenji car=sakura pace=0.719 finish=2 laps=132.85,128.06 cal=130.69,128.24 overtakes=3 contacts=2 worst=532 Ns (0.43 m/s, bumped 0.09) rescues=0 flips=0 off=2.5 s wander=7.2 m held=24.8 s
+BOT run=1 grid=5 Aoi car=hayate pace=0.747 finish=3 laps=135.46,125.74 cal=128.20,124.50 overtakes=4 contacts=4 worst=792 Ns (0.63 m/s, bumped 0.15) rescues=0 flips=0 off=2.5 s wander=8.3 m held=60.4 s
+BOT run=1 grid=6 Ren car=sakura pace=0.766 finish=1 laps=129.86,120.72 cal=123.66,120.77 overtakes=6 contacts=4 worst=1941 Ns (1.55 m/s, bumped 0.05) rescues=0 flips=0 off=3.3 s wander=6.9 m held=26.2 s
+BOT run=1 grid=7 player car=sakura pace=0.704 finish=4 laps=138.91,130.41 cal=133.65,130.72 overtakes=4 contacts=1 worst=12 Ns (0.01 m/s, bumped 0.00) rescues=0 flips=0 off=2.8 s wander=7.6 m held=29.1 s
+RACE run=1 route=hanami laps=2 finished=7/7 flips=0 rescues=0 overtakes=21 contacts=8 worst=1941 Ns (1.55 m/s, bumped 0.31) off=27.0 s
+SUMMARY route=hanami runs=1 laps=2 finished=7/7 flips=0 rescues/race=0.00 overtakes/race=21.0 contacts/race=8.0 worst=1941 Ns (1.55 m/s, bumped 0.31) finish_area_contacts/race=5.0 lap_err lap1 median=2.16 mean=3.33 max=7.26 s within_2s=3/7 flying median=0.18 mean=0.32 max=1.24 s within_2s=7/7 off=27.0 s/race
+COST physics tick mean=6305 us max=3887776 us over 36808 ticks
