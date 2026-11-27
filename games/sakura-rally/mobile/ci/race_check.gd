@@ -86,6 +86,8 @@ func _run() -> void:
 				a["car_us"], b["car_us"], 100.0 * (b["car_us"] / maxf(a["car_us"], 1.0) - 1.0), 100.0 * b["rails_share"]])
 		_check(b["car_us"] < a["car_us"], "rails: the cars' physics costs less per tick (%.0f vs %.0f us)" % [b["car_us"], a["car_us"]])
 		_check(int(b["flips"]) <= int(a["flips"]) + 1, "rails: no more flips than without (%d vs %d)" % [b["flips"], a["flips"]])
+		_check(int(b.get("order_flips", 0)) <= 3 * int(a.get("order_flips", 0)) + 60,
+				"rails: the running order does not churn (%d order flips vs %d without)" % [b.get("order_flips", 0), a.get("order_flips", 0)])
 	_finish()
 
 
@@ -321,6 +323,7 @@ func _race(rails: bool) -> Dictionary:
 		var rec: Array = flip_rec[k]
 		top.append("%s %d flips (%d with one on rails, %.1f m apart on average)" % [k, rec[0], rec[1], float(rec[3]) / maxf(float(rec[0]), 1.0)])
 	print("RACE %s: order flips %d, %d involving the player; most: %s" % [tag, total_flips, player_flips, " | ".join(top)])
+	res["order_flips"] = total_flips
 	if rails and director != null and is_instance_valid(director):
 		var scales := PackedStringArray()
 		for rv: Variant in director.get(&"rivals"):

@@ -84,6 +84,13 @@ rival first goes on rails, the director computes the lap its limit profile would
 O(samples) pass that agrees with a time-stepped simulation to 0.1 s. It then scales the rail speed
 by that lap over the stage's calibrated flying lap for the car's model and pace.
 
+No car goes on rails while another car is level with it (within about 7 m of road). If a car on
+rails finds itself level with another, it settles the pair: 4% quicker if it is level or ahead,
+4% slower if it is behind. Without this, two cars at the same average pace could run level and
+swap places in the running order hundreds of times a race (one CI race logged 1,563 swaps
+between two rivals, 3 m apart, all while one was on rails). That never showed on screen, because
+cars on rails are out of sight, but the position list flickered.
+
 The car wakes before it can be seen or touched. That happens within 160 m and in view, within
 42 m anywhere, within 40 m of road from your car, or when the spot one second ahead comes into
 view. On waking it rejoins physics at its speed, with its wheels spinning to match, in a gear that

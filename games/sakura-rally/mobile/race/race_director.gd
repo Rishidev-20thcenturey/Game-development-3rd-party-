@@ -53,6 +53,12 @@ const RAIL_LOOK_M := 45.0
 const RAIL_SAME_LANE_M := 2.4
 const RAIL_LANE_RATE := 1.2
 const CAR_LENGTH := 4.3
+## Two cars level in different lanes (within this many metres of road): no car goes on rails
+## beside another, and a car on rails beside one settles it, ALONGSIDE_K faster when level or
+## ahead, as much slower when behind (two cars at the same average pace would otherwise run level
+## and swap places in the running order tick after tick).
+const ALONGSIDE_M := CAR_LENGTH + 3.0
+const ALONGSIDE_K := 0.04
 ## Ground height under a car on rails: a ray every GROUND_TICKS ticks, smoothed.
 const GROUND_TICKS := 6
 ## How often sleep / wake is decided (ticks).
@@ -220,6 +226,10 @@ func _may_sleep(r: Rival, cam: Camera3D, player: Car) -> bool:
 		return false
 	if _road_gap(r, player) < PLAYER_SLEEP_GAP_M:
 		return false
+	if r.entrant != null:
+		for o in race.entrants:
+			if o != r.entrant and not o.finished and absf(o.dist - r.entrant.dist) < ALONGSIDE_M:
+				return false
 	var d := cam.global_position.distance_to(car.global_position)
 	if d > SLEEP_FAR_M:
 		return true
@@ -366,6 +376,7 @@ func _rail_step(r: Rival, delta: float) -> void:
 	# the car ahead in its lane: keep RAIL_FOLLOW_M, pass on the free side when it is slower
 	var cap := INF
 	var blocker_lat := NAN
+	var settle := 1.0
 	for o in race.entrants:
 		if o.car == car or not is_instance_valid(o.car):
 			continue
@@ -373,6 +384,8 @@ func _rail_step(r: Rival, delta: float) -> void:
 		var ds := track.abs_s(o.idx, op) - r.s
 		if track.closed:
 			ds = wrapf(ds, -track.length * 0.5, track.length * 0.5)
+		if absf(ds) < ALONGSIDE_M and not o.finished:
+			settle = 1.0 - ALONGSIDE_K if ds > 0.5 else 1.0 + ALONGSIDE_K
 		if ds <= 0.0 or ds > RAIL_LOOK_M:
 			continue
 		var olat := track.lateral(o.idx, op)
@@ -394,7 +407,7 @@ func _rail_step(r: Rival, delta: float) -> void:
 	elif is_nan(blocker_lat) and absf(r.lat_target) > 0.01 and _rail_side_clear(r, 0.0):
 		r.lat_target = 0.0
 	r.lat_target = clampf(r.lat_target, -room, room)
-	var target := maxf(minf(limit, cap), 0.0)
+	var target := maxf(minf(limit * settle, cap), 0.0)
 	r.v = minf(target, r.v + RAIL_ACCEL * delta) if r.v < target else maxf(target, r.v - RAIL_DECEL * delta)
 	r.s += r.v * delta
 	r.s = fposmod(r.s, track.length) if track.closed else clampf(r.s, track.first_s, track.last_s)
