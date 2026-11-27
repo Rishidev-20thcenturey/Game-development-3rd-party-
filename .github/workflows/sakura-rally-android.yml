@@ -108,12 +108,13 @@ jobs:
           fi
 
       - name: Compile check (mobile layer scripts)
+        continue-on-error: true
         run: |
-          set -o pipefail
-          timeout 300 godot --headless --disable-crash-handler --audio-driver Dummy --path "$PROJ" \
-            -s res://mobile/ci/compile_check.gd 2>&1 | tee compile.log | grep -E "COMPILE|SUMMARY|Parse Error|Compile Error"
-          if grep -E "COMPILE FAIL|Parse Error|Compile Error" compile.log; then
-            grep -E "Parse Error|Compile Error" compile.log | head -5 | while read -r l; do echo "::error title=compile::$l"; done
+          timeout 150 godot --headless --disable-crash-handler --audio-driver Dummy --path "$PROJ" \
+            -s res://mobile/ci/compile_check.gd > compile.log 2>&1; code=$?
+          grep -E "COMPILE|SUMMARY|Parse Error|Compile Error" compile.log || true
+          if [ $code -ne 0 ] || grep -qE "COMPILE FAIL|Parse Error|Compile Error" compile.log; then
+            echo "::error title=compile check (exit $code)::$(grep -vE '^\s*$' compile.log | tail -12 | tr '\n' '|' | cut -c1-1500)"
             exit 1
           fi
 

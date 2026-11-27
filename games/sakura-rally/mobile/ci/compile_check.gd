@@ -17,6 +17,7 @@ func _run() -> void:
 	files.sort()
 	var bad := 0
 	for f in files:
+		print("COMPILE ...  %s" % f)
 		var s := ResourceLoader.load(f, "Script", ResourceLoader.CACHE_MODE_IGNORE) as Script
 		var ok := s != null and s.can_instantiate()
 		bad += int(not ok)
