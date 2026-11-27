@@ -326,7 +326,7 @@ jobs:
           echo "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/$(basename "$APK")" | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Commit preview screenshots + build info
-        if: always() && github.event_name == 'push' && env.QUICK != '1'
+        if: always() && github.event_name == 'push'
         run: |
           set -euo pipefail
           D=games/sakura-rally/docs/ci
@@ -358,14 +358,15 @@ jobs:
           grep -E "CHECK|SUMMARY|TIMEOUT|race" flows.log > "$D/flows_summary.log" || true
           grep -E "CHECK|SUMMARY|RACE|POLICY|FAIL|TIMEOUT|ERROR" race_check.log > "$D/race_check.log" || true
           for b in upstream plus upstream80 plus80; do
+            [ -f "race_battle_$b.log" ] || continue
             grep -E "^(RACE|SUMMARY|COST|BOT)|ERROR" "race_battle_$b.log" > "$D/race_battle_$b.log" || true
           done
-          grep -E "CHECK|SUMMARY|SHOT|TIMEOUT|CENSUS|PARITY| fps  GPU|NAN|RACE|LOAD" render.log > "$D/render_summary.log" || true
+          [ ! -f render.log ] || grep -E "CHECK|SUMMARY|SHOT|TIMEOUT|CENSUS|PARITY| fps  GPU|NAN|RACE|LOAD" render.log > "$D/render_summary.log" || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$D"
           git diff --cached --quiet && exit 0
-          git commit -m "Sakura Rally: CI previews + build info [skip ci]"
+          git commit -m "Sakura Rally: CI $([ "$QUICK" = 1 ] && echo "quick-check logs" || echo "previews") + build info [skip ci]"
           for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 5; done
 
   emulator:

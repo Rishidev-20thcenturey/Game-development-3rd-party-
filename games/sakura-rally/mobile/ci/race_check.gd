@@ -242,6 +242,8 @@ func _race(rails: bool) -> Dictionary:
 					rec[1] += int(not ea.car.can_process() or not eb.car.can_process())
 					rec[3] += absf(ea.car.global_position.distance_to(eb.car.global_position))
 					flip_rec[key] = rec
+					if int(rec[0]) in [3, 50, 300, 1000]:
+						print("RACE %s: churn %s flip %d at %.1f s: %s | %s" % [tag, key, rec[0], t, _churn_state(ea, race), _churn_state(eb, race)])
 				flip_last[key] = ahead
 		if all_done:
 			break
@@ -288,7 +290,8 @@ func _race(rails: bool) -> Dictionary:
 				w["why"] = "slow (%.1f m/s)" % c.linear_velocity.length()
 			if not bool(w["ok"]):
 				bad += 1
-				print("RACE %s: woken car %s went wrong %.1f s after waking: %s" % [tag, c.name, t - float(w["from"]), w["why"]])
+				print("RACE %s: woken car %s went wrong %.1f s after waking: %s; nearest other car %.1f m" % [
+						tag, c.name, t - float(w["from"]), w["why"], _nearest_car(c, race)])
 	var ticks := maxi(meter.ticks - tick0, 1)
 	var wall_us := (Time.get_ticks_usec() - wall0) / float(ticks)
 	var car_us := (meter.car_usec - car0) / float(ticks)
@@ -341,6 +344,22 @@ func _race(rails: bool) -> Dictionary:
 
 
 # ---------------------------------------------------------------- helpers
+
+## One car in a churn report: race distance, speed, rails or physics, lateral offset, track index.
+func _churn_state(e: RaceField.Entrant, race: RaceField) -> String:
+	var c: Car = e.car
+	var lat: float = race.track.lateral(e.idx, c.global_position) if race.track != null else NAN
+	return "%s dist %.1f idx %d v %.1f m/s %s lat %.1f pos %s" % [str(e.info.get("name", "?")), e.dist, e.idx,
+			c.linear_velocity.length(), "physics" if c.can_process() else "RAILS", lat, c.global_position.round()]
+
+
+func _nearest_car(c: Car, race: RaceField) -> float:
+	var best := INF
+	for e in race.entrants:
+		if e.car != c and is_instance_valid(e.car):
+			best = minf(best, e.car.global_position.distance_to(c.global_position))
+	return best
+
 
 func _check(ok: bool, what: String) -> void:
 	checks += 1
